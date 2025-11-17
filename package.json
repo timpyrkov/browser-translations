@@ -1,0 +1,14 @@
+{
+  "name": "parallel-reading-web-pages",
+  "version": "1.0.0",
+  "description": "Parallel reading web pages in English, Spanish, and other languages.",
+  "private": true,
+  "scripts": {
+    "build:firefox": "node build.js firefox",
+    "build:chrome": "node build.js chrome",
+    "build": "npm run build:firefox && npm run build:chrome",
+    "clean": "rm -rf dist"
+  },
+  "author": "Tim Pyrkov",
+  "license": "MIT"
+}

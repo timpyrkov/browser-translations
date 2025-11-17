@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Parallel Translator Settings</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h1 class="gradient-text">Parallel Translator Settings</h1>
+    <form id="translation-settings-form">
+
+      <div class="form-group checkbox-group">
+        <input type="checkbox" id="engToSpa" name="engToSpa" />
+        <label for="engToSpa">Translate English to Spanish</label>
+      </div>
+
+      <div class="form-group checkbox-group">
+        <input type="checkbox" id="spaToEng" name="spaToEng" />
+        <label for="spaToEng">Translate Spanish to English</label>
+      </div>
+
+      <hr class="divider" />
+
+      <div class="form-group">
+        <label for="mode">Translation Mode:</label>
+        <div class="radio-group">
+          <label>
+            <input type="radio" name="translationMode" value="full" />
+            Full page parallel (line-by-line)
+          </label><br />
+          <label>
+            <input type="radio" name="translationMode" value="selected" />
+            Translate only selected text
+          </label><br />
+          <label>
+            <input type="radio" name="translationMode" value="hover" />
+            Hover to translate on demand
+          </label>
+        </div>
+      </div>
+
+      <hr class="divider" />
+
+      <div class="save-container">
+        <button type="submit" class="btn btn-green">
+          <span class="gradient-text">Save Settings</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
