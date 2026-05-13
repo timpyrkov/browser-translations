@@ -3,6 +3,6 @@
   <span style="font-size:2.5em; vertical-align: middle;"><b>Browser Translations</b></span>
 </p></h1>
 
-## Translate web page English, Spanish, and other languages (Chrome/Firefox extension)
+### Translate web page English, Spanish, and other languages (Chrome/Firefox extension)
 
 Convenient interface to translate web page text (Online: LibreTranslation, OpenAI API OR offline: Argos, Apertium) and read it both languages side-by-side in parallel.
