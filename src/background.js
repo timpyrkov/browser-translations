@@ -1,86 +1,36 @@
-// Background script for Parallel Reading extension
-// Handles message relay between content script and sidebar
+// Background script for Browser Translations extension
+//
+// Message flow is now pull-based: the sidebar queries the active tab's
+// content script directly (see sidebar.js) instead of content.js pushing
+// text through the background script. This avoids the "sidebar not ready
+// yet" race condition that used to require retry/relay logic here.
+// The background script only needs to seed default settings on install.
 
-// Store the current active tab for sidebar communication
-let currentActiveTab = null;
+// API compatibility
+const brw = typeof browser !== "undefined" ? browser : chrome;
 
-// Listen for messages from content script and popup
-browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-  console.log("Background received message:", message);
-
-  try {
-    switch (message.command) {
-      case "deliver-main-text":
-        // Relay text from content script to sidebar
-        await relayToSidebar(message);
-        break;
-      case "get-settings":
-        // Return stored settings
-        const settings = await browser.storage.local.get([
-          "sourceLanguage",
-          "targetLanguage", 
-          "translationMode"
-        ]);
-        sendResponse(settings);
-        break;
-      default:
-        console.warn("Unknown message command:", message.command);
-    }
-  } catch (error) {
-    console.error("Background script error:", error);
-    sendResponse({ error: error.message });
-  }
-});
-
-// Handle tab activation to track current active tab
-browser.tabs.onActivated.addListener(async (activeInfo) => {
-  currentActiveTab = activeInfo.tabId;
-});
-
-// Handle tab updates
-browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status === "complete" && tab.active) {
-    currentActiveTab = tabId;
-  }
-});
-
-/**
- * Relay message to sidebar
- */
-async function relayToSidebar(message) {
-  let retries = 5;
-  while (retries > 0) {
-    try {
-      // Use the original message object directly
-      await browser.runtime.sendMessage(message);
-      console.log("Message relayed to sidebar successfully");
-      return; // Exit on success
-    } catch (error) {
-      if (error.message.includes("Could not establish connection")) {
-        retries--;
-        if (retries === 0) {
-          console.error("Failed to relay message to sidebar after multiple retries.", error);
-          throw error;
-        }
-        console.warn(`Sidebar not ready, retrying... (${retries} attempts left)`);
-        await new Promise(resolve => setTimeout(resolve, 100)); // Wait 100ms
-      } else {
-        console.error("An unexpected error occurred while relaying to sidebar:", error);
-        throw error; // Rethrow other errors
-      }
-    }
-  }
-}
-
-// Handle extension installation/update
-browser.runtime.onInstalled.addListener(async (details) => {
+brw.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === "install") {
-    // Set default settings on first install ONLY
-    await browser.storage.local.set({
+    await brw.storage.local.set({
       sourceLanguage: "auto",
-      targetLanguage: "es",
-      translationMode: "full"
+      targetLanguage: "en"
     });
     console.log("Default settings initialized");
   }
-}); 
+});
+
+// There's no popup (see manifests) — clicking the toolbar icon should just
+// open the sidebar/side panel directly.
+if (typeof browser !== "undefined" && browser.sidebarAction) {
+  // Firefox: with no default_popup, clicking the action icon fires
+  // action.onClicked instead of doing nothing, so open the sidebar here.
+  browser.action.onClicked.addListener(() => {
+    browser.sidebarAction.open();
+  });
+} else if (typeof chrome !== "undefined" && chrome.sidePanel) {
+  // Chrome: this is the documented way to make the action icon open the
+  // side panel directly, without needing an onClicked listener.
+  chrome.sidePanel
+    .setPanelBehavior({ openPanelOnActionClick: true })
+    .catch((error) => console.error("Failed to set side panel behavior:", error));
+}

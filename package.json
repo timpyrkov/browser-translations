@@ -1,7 +1,7 @@
 {
-  "name": "parallel-reading-web-pages",
+  "name": "browser-translations",
   "version": "1.0.0",
-  "description": "Parallel reading web pages in English, Spanish, and other languages.",
+  "description": "Parallel reading web pages to learn Spanish, Russian, Korean, and more.",
   "private": true,
   "scripts": {
     "build:firefox": "node build.js firefox",
