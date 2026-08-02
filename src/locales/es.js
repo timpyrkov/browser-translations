@@ -33,8 +33,9 @@ export default {
   loadingText: "Cargando y traduciendo...",
   engineMyMemory: "MyMemory (gratis)",
   engineOpenAI: "OpenAI",
-  engineAnthropic: "Claude",
+  engineAnthropic: "Anthropic",
   engineMistral: "Mistral",
+  engineGroq: "Groq",
   engineOllama: "Ollama (local)",
   engineLibreTranslate: "LibreTranslate (local)",
 

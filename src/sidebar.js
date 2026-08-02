@@ -43,7 +43,7 @@ const MAX_HISTORY = 10;
 let translationHistory = []; // avoid shadowing the global window.history
 let historyIndex = -1;
 
-const ENGINES = ["mymemory", "openai", "anthropic", "mistral", "ollama", "libretranslate"];
+const ENGINES = ["mymemory", "openai", "anthropic", "mistral", "groq", "ollama", "libretranslate"];
 
 // "auto": translate the user's selection if any, otherwise the
 // auto-detected main content. "full": translate everything visible on the
@@ -60,6 +60,7 @@ const MODEL_DEFAULTS = {
   openai: "gpt-5.6-terra",
   anthropic: "claude-sonnet-5",
   mistral: "mistral-small-latest",
+  groq: "llama-3.3-70b-versatile",
   ollama: "mistral",
 };
 
@@ -84,6 +85,7 @@ const ENGINE_LABEL_KEYS = {
   openai: "engineOpenAI",
   anthropic: "engineAnthropic",
   mistral: "engineMistral",
+  groq: "engineGroq",
   ollama: "engineOllama",
   libretranslate: "engineLibreTranslate",
 };

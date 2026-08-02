@@ -33,8 +33,9 @@ export default {
   loadingText: "正在加载和翻译...",
   engineMyMemory: "MyMemory（免费）",
   engineOpenAI: "OpenAI",
-  engineAnthropic: "Claude",
+  engineAnthropic: "Anthropic",
   engineMistral: "Mistral",
+  engineGroq: "Groq",
   engineOllama: "Ollama（本地）",
   engineLibreTranslate: "LibreTranslate（本地）",
 

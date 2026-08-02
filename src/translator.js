@@ -79,10 +79,15 @@ function truncateLinesForLocalCap(lines, maxChars) {
 //   hardware, which matters more for Ollama than raw multilingual coverage
 //   given the configurable local size cap (DEFAULT_LOCAL_CAP_CHARS) already
 //   keeps requests small.
+// - groq: llama-3.3-70b-versatile - Groq's OpenAI-compatible cloud runs
+//   Llama 3.3 70B at very high tokens/sec, so bulk per-line translation
+//   comes back fast; the 70B tier keeps strong multilingual quality while
+//   the "versatile" alias stays pointed at Groq's current production build.
 const DEFAULT_MODELS = {
   openai: "gpt-5.6-terra",
   anthropic: "claude-sonnet-5",
   mistral: "mistral-small-latest",
+  groq: "llama-3.3-70b-versatile",
   ollama: "mistral",
 };
 
@@ -424,6 +429,31 @@ async function translateWithMistral(lines, sourceLangName, targetLangName, { api
   return parseNumberedLines(result.choices?.[0]?.message?.content || "", lines.length);
 }
 
+// Groq exposes an OpenAI-compatible Chat Completions API, so this mirrors
+// translateWithOpenAI almost exactly - only the endpoint and default model
+// differ.
+async function translateWithGroq(lines, sourceLangName, targetLangName, { apiKey, model }) {
+  if (!apiKey) throw new Error("Missing Groq API key");
+  const result = await fetchJson(
+    "https://api.groq.com/openai/v1/chat/completions",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: model || DEFAULT_MODELS.groq,
+        messages: [
+          { role: "system", content: "You are a precise translation engine." },
+          { role: "user", content: buildLlmPrompt(lines, sourceLangName, targetLangName) },
+        ],
+        temperature: 0,
+      }),
+    },
+    "Groq"
+  );
+  lastUsage = { provider: "groq", tokens: result.usage?.total_tokens };
+  return parseNumberedLines(result.choices?.[0]?.message?.content || "", lines.length);
+}
+
 async function translateWithOllama(lines, sourceLangName, targetLangName, { model, baseUrl }) {
   const url = `${(baseUrl || "http://localhost:11434").replace(/\/$/, "")}/api/chat`;
   const result = await fetchJson(
@@ -447,6 +477,7 @@ const LLM_PROVIDERS = {
   openai: translateWithOpenAI,
   anthropic: translateWithAnthropic,
   mistral: translateWithMistral,
+  groq: translateWithGroq,
   ollama: translateWithOllama,
 };
 

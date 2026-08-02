@@ -33,8 +33,9 @@ export default {
   loadingText: "불러오고 번역하는 중...",
   engineMyMemory: "MyMemory (무료)",
   engineOpenAI: "OpenAI",
-  engineAnthropic: "Claude",
+  engineAnthropic: "Anthropic",
   engineMistral: "Mistral",
+  engineGroq: "Groq",
   engineOllama: "Ollama (로컬)",
   engineLibreTranslate: "LibreTranslate (로컬)",
 

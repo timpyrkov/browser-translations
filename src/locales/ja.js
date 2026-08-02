@@ -33,8 +33,9 @@ export default {
   loadingText: "読み込みと翻訳中...",
   engineMyMemory: "MyMemory（無料）",
   engineOpenAI: "OpenAI",
-  engineAnthropic: "Claude",
+  engineAnthropic: "Anthropic",
   engineMistral: "Mistral",
+  engineGroq: "Groq",
   engineOllama: "Ollama（ローカル）",
   engineLibreTranslate: "LibreTranslate（ローカル）",
 
