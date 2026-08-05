@@ -3,13 +3,36 @@
   <span style="font-size:2.5em; vertical-align: middle;"><b>Browser Translations</b></span>
 </p></h1>
 
-### Learn languages by reading web pages side-by-side, original and translated (Firefox/Chrome extension)
-
 A simple sidebar that shows the main text of the current page (news, Wikipedia, blogs, etc.) next to its machine translation, so you can compare sentence structure line-by-line while you read. Built as a hobby project to help learn **Spanish**, **Russian**, and **Korean**.
 
 Translation defaults to the free [MyMemory](https://mymemory.translated.net) API (no signup required, ~500 words/day per IP — LibreTranslate's public endpoint now requires a paid API key, so it's no longer used). For better quality and no daily word cap, pick **OpenAI**, **Anthropic Claude**, **Mistral**, or local **Ollama** from the engine dropdown in the sidebar toolbar and set your API key/URL — see [Optional: LLM-based translation](#optional-llm-based-translation) below.
 
-## Features
+## 🚀 Quick Start
+
+### Build
+
+```bash
+npm run build:firefox    # -> dist/firefox/
+npm run build:chrome     # -> dist/chrome/
+```
+
+### Firefox
+
+```
+about:debugging#/runtime/this-firefox
+```
+Then click **Load Temporary Add-on…** and select `dist/firefox/manifest.json`
+
+### Chrome
+
+```
+chrome://extensions/
+```
+Then click **Load unpacked** and select the `dist/chrome/` folder
+
+---
+
+## ✨ Features
 
 - Sidebar showing each sentence's original text directly above its translation
 - Supports 9 languages: English, Spanish, Italian, French, German, Russian, Korean, Japanese, Chinese — automatic source-language detection, or pick languages manually from the sidebar toolbar
@@ -92,6 +115,35 @@ The **Model** field is optional for OpenAI/Anthropic/Mistral — leave it blank 
 - The sidebar shows each original sentence directly above its translation (no scroll sync needed, since it's a single column)
 - `npm run build:firefox` / `npm run build:chrome` package the `src/` folder with the matching manifest into `dist/`
 
-## TODO
+---
 
-- After testing the extension for a while, prepare it for **registering (without publishing)** with each browser's developer program, so it survives restarts without reloading from `about:debugging`/`chrome://extensions` each session (e.g. a self-signed/unlisted Firefox `.xpi` via addons.mozilla.org, and Chrome's unpacked-load persistence already covers that side).
+## 📋 TODO
+
+- **Publish to AMO (addons.mozilla.org)** so Firefox installs it permanently
+  instead of it disappearing on every restart as a temporary add-on. Unlisted
+  ("On your own") self-distribution is enough — Mozilla signs the `.xpi` without
+  listing it publicly:
+
+  ```bash
+  cd dist/firefox && web-ext sign --channel=unlisted --api-key=KEY --api-secret=SECRET
+  ```
+
+  The stable extension ID (`browser_specific_settings.gecko.id`) is already in
+  place, which is a prerequisite. Optionally add an `update_url` afterwards for
+  automatic updates instead of reinstalling by hand.
+- **Publish to the Chrome Web Store**, the Chrome analogue. Unlisted/private
+  distribution is available there too (one-time developer registration fee).
+  Loading `dist/chrome/` unpacked already persists across restarts, so this is
+  only needed for real distribution or to drop the developer-mode nag. Pin the
+  extension ID with a `"key"` manifest field if it should stay constant.
+- **Label manager** — one place to rename a label everywhere, merge two labels,
+  recolour, or delete one globally.
+- **More site rules** as they prove necessary — Twitch, Bluesky, Spotify, Amazon.
+- **Track focused time** alongside open time, to tell "open 3 weeks, never read"
+  from "read daily".
+
+---
+
+## 📝 License
+
+MIT
