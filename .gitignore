@@ -31,3 +31,8 @@ replay_pid*
 
 # Node.js dependencies
 /node_modules/
+
+# Private/local guides
+amo_guide.md
+
+

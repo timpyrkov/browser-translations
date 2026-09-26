@@ -64,17 +64,28 @@ const MODEL_DEFAULTS = {
   ollama: "mistral",
 };
 
+function makeOption(value, text) {
+  const option = document.createElement("option");
+  option.value = value;
+  option.textContent = text;
+  return option;
+}
+
 function populateLanguageSelects(uiLang) {
   const strings = UI_STRINGS[uiLang] || UI_STRINGS.en;
   const names = strings.languageNames || UI_STRINGS.en.languageNames;
   const fromSelected = fromLangEl.value;
   const toSelected = toLangEl.value;
 
-  const optionsHtml = LANGUAGES
-    .map((l) => `<option value="${l.code}">${names[l.code] || l.name}</option>`)
-    .join("");
-  fromLangEl.innerHTML = `<option value="auto">${strings.autodetectLabel}</option>` + optionsHtml;
-  toLangEl.innerHTML = optionsHtml;
+  fromLangEl.textContent = "";
+  toLangEl.textContent = "";
+
+  fromLangEl.appendChild(makeOption("auto", strings.autodetectLabel));
+  for (const l of LANGUAGES) {
+    const label = names[l.code] || l.name;
+    fromLangEl.appendChild(makeOption(l.code, label));
+    toLangEl.appendChild(makeOption(l.code, label));
+  }
 
   if (fromSelected) fromLangEl.value = fromSelected;
   if (toSelected) toLangEl.value = toSelected;
@@ -93,25 +104,29 @@ const ENGINE_LABEL_KEYS = {
 function populateEngineSelect(uiLang) {
   const strings = UI_STRINGS[uiLang] || UI_STRINGS.en;
   const selected = engineSelectEl.value;
-  engineSelectEl.innerHTML = ENGINES
-    .map((value) => `<option value="${value}">${strings[ENGINE_LABEL_KEYS[value]]}</option>`)
-    .join("");
+  engineSelectEl.textContent = "";
+  for (const value of ENGINES) {
+    engineSelectEl.appendChild(makeOption(value, strings[ENGINE_LABEL_KEYS[value]]));
+  }
   if (selected) engineSelectEl.value = selected;
 }
 
 function populateScopeSelect(uiLang) {
   const strings = UI_STRINGS[uiLang] || UI_STRINGS.en;
   const selected = scopeSelectEl.value;
-  scopeSelectEl.innerHTML = SCOPES
-    .map((value) => `<option value="${value}">${strings[SCOPE_LABEL_KEYS[value]]}</option>`)
-    .join("");
+  scopeSelectEl.textContent = "";
+  for (const value of SCOPES) {
+    scopeSelectEl.appendChild(makeOption(value, strings[SCOPE_LABEL_KEYS[value]]));
+  }
   if (selected) scopeSelectEl.value = selected;
 }
 
 function populateUiLangSelect() {
-  uiLangSelectEl.innerHTML = LANGUAGES
-    .map((l) => `<option value="${l.code}">${UI_FLAGS[l.code] || ""} ${l.code.toUpperCase()}</option>`)
-    .join("");
+  uiLangSelectEl.textContent = "";
+  for (const l of LANGUAGES) {
+    const label = `${UI_FLAGS[l.code] || ""} ${l.code.toUpperCase()}`.trim();
+    uiLangSelectEl.appendChild(makeOption(l.code, label));
+  }
 }
 
 /**
@@ -259,18 +274,30 @@ function updateUsageHint() {
 function showWelcome() {
   currentScreen = "welcome";
   const strings = UI_STRINGS[uiLangSelectEl.value] || UI_STRINGS.en;
-  readingPaneEl.innerHTML = `<p class="welcome-text">${strings.welcomeText}</p>`;
+  readingPaneEl.textContent = "";
+  const p = document.createElement("p");
+  p.className = "welcome-text";
+  p.textContent = strings.welcomeText;
+  readingPaneEl.appendChild(p);
 }
 
 function showLoading() {
   currentScreen = "loading";
   const strings = UI_STRINGS[uiLangSelectEl.value] || UI_STRINGS.en;
-  readingPaneEl.innerHTML = `<p class="loading-text">${strings.loadingText}</p>`;
+  readingPaneEl.textContent = "";
+  const p = document.createElement("p");
+  p.className = "loading-text";
+  p.textContent = strings.loadingText;
+  readingPaneEl.appendChild(p);
 }
 
 function showError(message) {
   currentScreen = "error";
-  readingPaneEl.innerHTML = `<p class="error-text">${message}</p>`;
+  readingPaneEl.textContent = "";
+  const p = document.createElement("p");
+  p.className = "error-text";
+  p.textContent = message;
+  readingPaneEl.appendChild(p);
 }
 
 /**
@@ -590,7 +617,7 @@ function buildLinePair(originalLine, translatedLine) {
  */
 function renderParallelBlocks(originalBlocks, translatedBlocks) {
   currentScreen = "result";
-  readingPaneEl.innerHTML = "";
+  readingPaneEl.textContent = "";
 
   const fragment = document.createDocumentFragment();
   let currentList = null; // open <ul>/<ol> while consecutive li blocks share the same type

@@ -5,7 +5,7 @@
 
 A simple sidebar that shows the main text of the current page (news, Wikipedia, blogs, etc.) next to its machine translation, so you can compare sentence structure line-by-line while you read. Built as a hobby project to help learn **Spanish**, **Russian**, and **Korean**.
 
-Translation defaults to the free [MyMemory](https://mymemory.translated.net) API (no signup required, ~500 words/day per IP — LibreTranslate's public endpoint now requires a paid API key, so it's no longer used). For better quality and no daily word cap, pick **OpenAI**, **Anthropic Claude**, **Mistral**, or local **Ollama** from the engine dropdown in the sidebar toolbar and set your API key/URL — see [Optional: LLM-based translation](#optional-llm-based-translation) below.
+Translation defaults to the free [MyMemory](https://mymemory.translated.net) API (no signup required, ~500 words/day per IP — LibreTranslate's public endpoint now requires a paid API key, so it's no longer used). For better quality and no daily word cap, pick **OpenAI**, **Anthropic**, **Mistral**, **Groq**, or local **Ollama** from the engine dropdown in the sidebar toolbar and set your API key/URL — see [Optional: LLM-based translation](#optional-llm-based-translation) below.
 
 ## 🚀 Quick Start
 
@@ -85,8 +85,9 @@ npm run build           # both
 By default, translation uses the free MyMemory API — no setup needed, but limited to ~500 words/day per IP. To use a higher-quality/higher-quota provider instead, pick one from the **engine dropdown** in the sidebar toolbar (next to the language selectors), then click the **gear icon** beside it to open the engine settings panel:
 
 - **OpenAI** — needs an API key from [platform.openai.com](https://platform.openai.com/api-keys). Defaults to `gpt-5.6-terra`.
-- **Anthropic Claude** — needs an API key from [console.anthropic.com](https://console.anthropic.com/). Defaults to `claude-sonnet-5`.
+- **Anthropic** — needs an API key from [console.anthropic.com](https://console.anthropic.com/). Defaults to `claude-sonnet-5`.
 - **Mistral** — needs an API key from [console.mistral.ai](https://console.mistral.ai/). Defaults to `mistral-small-latest`.
+- **Groq** — needs an API key from [console.groq.com](https://console.groq.com/). Defaults to `llama-3.3-70b-versatile`.
 - **Ollama** — fully local and free, no API key. Run Ollama and enter its URL (default `http://localhost:11434`) and the model name you've pulled (defaults to `mistral`).
 - **LibreTranslate** — fully local and free like Ollama, but a dedicated translation server (not an LLM) with no daily word cap. Run it via Docker: `docker run -it -p 5001:5000 -v libretranslate_models:/home/libretranslate/.local/share libretranslate/libretranslate` (first run downloads language models, can take a while). Enter the server URL in engine settings (default `http://localhost:5001`); no API key needed for a default local instance.
 
@@ -98,7 +99,17 @@ Both Ollama and LibreTranslate also show a **"Local translation cap (characters)
   ```
   If Ollama auto-starts via a LaunchAgent (macOS, e.g. `~/Library/LaunchAgents/com.ollama.serve.plist` for a Homebrew install), add an `EnvironmentVariables` dict with that key to the plist, then `launchctl unload`/`launchctl load` it (or `brew services restart ollama` if managed by Homebrew services) so it persists across restarts.
 
-The **Model** field is optional for OpenAI/Anthropic/Mistral — leave it blank to use the default shown next to the field. The API key is stored only in this browser's local extension storage and is sent only to the selected provider's own API. If a request to your chosen provider fails for any reason (bad/missing key, network issue, rate limit), translation automatically falls back to MyMemory so the extension keeps working. After a successful LLM translation, the panel also shows a rough token-usage note for that request.
+The **Model** field is optional for OpenAI/Anthropic/Mistral/Groq — leave it blank to use the default shown next to the field. The API key is stored only in this browser's local extension storage and is sent only to the selected provider's own API. If a request to your chosen provider fails for any reason (bad/missing key, network issue, rate limit), translation automatically falls back to MyMemory so the extension keeps working. After a successful LLM translation, the panel also shows a rough token-usage note for that request.
+
+## Privacy and data handling
+
+The extension itself does not collect, store, or share any personal data. When you click **Translate**, the readable text of the active page is sent to the translation engine you selected:
+
+- **MyMemory** — anonymous, free, rate-limited by IP.
+- **OpenAI, Anthropic, Mistral, Groq** — sent only when you provide your own API key; you are responsible for any charges from that provider.
+- **Ollama / LibreTranslate** — local/self-hosted by you; text does not leave your machine unless you configure a remote server.
+
+See [PRIVACY.md](PRIVACY.md) for the full policy.
 
 ## Troubleshooting
 
@@ -109,8 +120,8 @@ The **Model** field is optional for OpenAI/Anthropic/Mistral — leave it blank 
 
 ## Development Notes
 
-- The extension uses the free [MyMemory](https://mymemory.translated.net) API for translations by default, with optional OpenAI/Anthropic/Mistral/Ollama providers (`src/translator.js`)
-- Main-content extraction uses Mozilla's [Readability.js](https://github.com/mozilla/readability) (the same library behind Firefox's Reader View, Apache-2.0 licensed, vendored unmodified in `src/vendor/`) run on a cloned/detached document, falling back to a hand-rolled heuristic (`findContentRoot()` in `src/content.js`) if Readability doesn't consider the page readerable. Wikipedia/MediaWiki pages use a dedicated extractor instead (`extractWikipediaArticle()`), since Readability drops infobox tables and mishandles MediaWiki's edit-section markup
+- The extension uses the free [MyMemory](https://mymemory.translated.net) API for translations by default, with optional OpenAI/Anthropic/Mistral/Groq/Ollama providers (`src/translator.js`)
+- Main-content extraction uses Mozilla's [Readability.js](https://github.com/mozilla/readability) (the same library behind Firefox's Reader View, Apache-2.0 licensed, vendored in `src/vendor/`) run on a cloned/detached document, falling back to a hand-rolled heuristic (`findContentRoot()` in `src/content.js`) if Readability doesn't consider the page readerable. Wikipedia/MediaWiki pages use a dedicated extractor instead (`extractWikipediaArticle()`), since Readability drops infobox tables and mishandles MediaWiki's edit-section markup. The vendored file has a minimal patch that replaces two internal `innerHTML` assignments with a `DOMParser` helper so AMO's `addons-linter` reports zero warnings.
 - There is no separate Options/Settings page — language, engine, API key, and theme choices all live in the sidebar toolbar and are stored in browser storage
 - The sidebar shows each original sentence directly above its translation (no scroll sync needed, since it's a single column)
 - `npm run build:firefox` / `npm run build:chrome` package the `src/` folder with the matching manifest into `dist/`
@@ -120,12 +131,13 @@ The **Model** field is optional for OpenAI/Anthropic/Mistral — leave it blank 
 ## 📋 TODO
 
 - **Publish to AMO (addons.mozilla.org)** so Firefox installs it permanently
-  instead of it disappearing on every restart as a temporary add-on. Unlisted
-  ("On your own") self-distribution is enough — Mozilla signs the `.xpi` without
-  listing it publicly:
+  instead of disappearing on every restart as a temporary add-on. See
+  [`amo_guide.md`](amo_guide.md) (not synced to git) for the step-by-step
+  submission guide. Listed public distribution is the goal; unlisted
+  ("On your own") self-distribution is also possible if preferred:
 
   ```bash
-  cd dist/firefox && web-ext sign --channel=unlisted --api-key=KEY --api-secret=SECRET
+  cd dist/firefox && web-ext sign --channel=listed --api-key=KEY --api-secret=SECRET
   ```
 
   The stable extension ID (`browser_specific_settings.gecko.id`) is already in
