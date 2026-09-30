@@ -31,7 +31,7 @@ export default {
   translationNoteLocal: "通过本地 {0} 翻译",
   translationNoteLocalModel: "通过本地 {0} 模型 - {1} 翻译",
   apiKeyLabel: "API 密钥",
-  apiKeySecurityNote: "<strong>重要：</strong>请使用专用于此扩展程序的 API 密钥，在提供商网站上设置较低的使用量/支出限额，如果发现任何可疑情况或停止使用该扩展程序，请立即撤销该密钥。",
+  apiKeySecurityNote: "<strong>重要：</strong>请使用专用于此扩展程序的 API 密钥。在提供商侧设置较低的使用量/支出限额。如果发现任何可疑情况或停止使用该扩展程序，请立即撤销该密钥。",
   modelLabel: "模型",
   ollamaUrlLabel: "Ollama 服务器地址",
   libretranslateUrlLabel: "LibreTranslate 服务器地址",

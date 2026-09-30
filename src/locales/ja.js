@@ -31,7 +31,7 @@ export default {
   translationNoteLocal: "{0} ローカルで翻訳",
   translationNoteLocalModel: "{0} ローカルモデル - {1} で翻訳",
   apiKeyLabel: "APIキー",
-  apiKeySecurityNote: "<strong>重要:</strong> この拡張機能専用の API キーを使用し、プロバイダーのサイトで低い使用量/支出上限を設定し、不審な点があるか、この拡張機能の使用をやめる場合はすぐにキーを取り消してください。",
+  apiKeySecurityNote: "<strong>重要:</strong> この拡張機能専用の API キーを使用してください。プロバイダー側で低い使用量/支出上限を設定してください。不審な点があるか、この拡張機能の使用をやめる場合は、すぐにキーを取り消してください。",
   modelLabel: "モデル",
   ollamaUrlLabel: "Ollama サーバーURL",
   libretranslateUrlLabel: "LibreTranslate サーバーURL",

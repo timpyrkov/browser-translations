@@ -31,7 +31,7 @@ export default {
   translationNoteLocal: "Translated with {0} local",
   translationNoteLocalModel: "Translated with {0} local model - {1}",
   apiKeyLabel: "API key",
-  apiKeySecurityNote: "<strong>IMPORTANT:</strong> Use a dedicated API key for this extension, set a low usage/spending limit on the provider's site, and revoke the key immediately if you notice anything suspicious or if you stop using the extension.",
+  apiKeySecurityNote: "<strong>IMPORTANT:</strong> Use a dedicated API key for this extension. Set a low usage/spending limit on the provider's side. Revoke the key immediately if anything looks suspicious or if you stop using the extension.",
   modelLabel: "Model",
   ollamaUrlLabel: "Ollama server URL",
   libretranslateUrlLabel: "LibreTranslate server URL",
