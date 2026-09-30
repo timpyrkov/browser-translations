@@ -31,7 +31,7 @@ export default {
   translationNoteLocal: "Lokal übersetzt mit {0}",
   translationNoteLocalModel: "Lokal übersetzt mit {0}, Modell - {1}",
   apiKeyLabel: "API-Schlüssel",
-  apiKeySecurityNote: "<strong>WICHTIG:</strong> verwenden Sie einen dedizierten API-Schlüssel für diese Erweiterung, setzen Sie auf der Anbieterseite ein niedriges Nutzungs-/Ausgabelimit und widerrufen Sie den Schlüssel sofort, wenn Sie etwas Verdächtiges bemerken.",
+  apiKeySecurityNote: "<strong>WICHTIG:</strong> verwenden Sie einen dedizierten API-Schlüssel für diese Erweiterung, setzen Sie auf der Anbieterseite ein niedriges Nutzungs-/Ausgabelimit und widerrufen Sie den Schlüssel sofort, wenn Sie etwas Verdächtiges bemerken oder die Erweiterung nicht mehr verwenden.",
   modelLabel: "Modell",
   ollamaUrlLabel: "Ollama-Server-URL",
   libretranslateUrlLabel: "LibreTranslate-Server-URL",
