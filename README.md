@@ -3,7 +3,7 @@
   <span style="font-size:2.5em; vertical-align: middle;"><b>Browser Translations</b></span>
 </p></h1>
 
-A simple sidebar that shows the main text of the current page (news, Wikipedia, blogs, etc.) next to its machine translation, so you can compare sentence structure line-by-line while you read. Built as a hobby project to help learn **Spanish**, **Russian**, and **Korean**.
+A simple sidebar for parallel reading: it shows the main text of the current page (news, Wikipedia, blogs, etc.) next to its machine translation, sentence by sentence, so you can compare the original and translated wording line-by-line. Built as a hobby project to help learn **Spanish**, **Russian**, and **Korean**.
 
 Translation defaults to the free [MyMemory](https://mymemory.translated.net) API (no signup required, ~500 words/day per IP — LibreTranslate's public endpoint now requires a paid API key, so it's no longer used). For better quality and no daily word cap, pick **Lingva** (free hosted Google Translate proxy, no key), **OpenAI**, **Gemini**, **Anthropic**, **Mistral**, **Groq**, **DeepSeek**, **Kimi**, or local **Ollama** / **LibreTranslate** from the engine dropdown in the sidebar toolbar and set your API key/URL — see [Optional: LLM-based translation](#optional-llm-based-translation) below.
 

@@ -4,7 +4,9 @@
 
 ## Summary
 
-Browser Translations is a browser extension that shows the main text of the current web page next to a line-by-line translation. The extension itself does not collect, store, or share any personal information on its own servers. However, because the core feature is translation, the text you choose to translate is sent to the third-party translation engine you select.
+Browser Translations is a browser extension that shows the main text of the current web page next to its translation, sentence by sentence, so you can read the original and translated text in parallel. The extension itself does not collect, store, or transmit any personal information, browsing data, or user content to servers owned or operated by the developer.
+
+Because the core feature is translation, the text you choose to translate is sent directly from your browser to the third-party translation engine you select. The extension acts solely as a technical bridge to facilitate that connection — there is no relay or intermediary server operated by the extension author.
 
 **If you do not want any page text to leave your computer**, you can run a local engine instead: install and start **Ollama** with a local model, or run a **LibreTranslate** server, then choose either engine from the dropdown menu. When a local engine is selected, no text is sent to any external service.
 
@@ -27,7 +29,9 @@ This is a safety net, not a guarantee: you remain responsible for the pages you 
 
 ### Web page content
 
-When you click **Translate**, the extension extracts the readable text of the active tab (the same article-style content you see when using Firefox Reader View) and sends it to the selected translation engine. Nothing is sent automatically or in the background — translation only happens when you explicitly press the button.
+When you click **Translate**, the extension extracts the readable text of the active tab (the same article-style content you see when using Firefox Reader View) and sends it directly from your browser to the selected translation engine. Nothing is sent automatically or in the background — translation only happens when you explicitly press the button.
+
+By selecting a provider and pressing **Translate**, you acknowledge that you are entering into a direct interaction with that third-party service. The extension only passes the extracted text and a short translation prompt to the provider's API; it does not add any tracking identifiers or intermediate processing.
 
 ### Settings and preferences
 
@@ -41,7 +45,7 @@ The following are stored locally in your browser's extension storage and never t
 
 ## Third-party translation services
 
-The extension can use several translation backends. Depending on which engine you choose, your selected page text and the surrounding translation prompt are sent to one of these providers:
+The extension can use several translation backends. Depending on which engine you choose, your selected page text and the surrounding translation prompt are sent directly from your browser to one of these providers. There is no relay, proxy, or intermediary server operated by the extension author.
 
 ### Default: MyMemory
 
@@ -71,6 +75,8 @@ These providers are only used if you explicitly select them and enter your own A
 | Kimi (Moonshot AI) | `https://api.moonshot.ai/v1/chat/completions` | Same as above |
 
 Your API key is stored only in your browser's local extension storage and is sent only to the selected provider's API endpoint in the `Authorization` or `x-api-key` header. It is never sent to the extension author or any other server. In addition, the extension validates each request against a hardcoded list of allowed endpoints so an API key cannot be accidentally sent to an unexpected URL.
+
+By entering your personal API key and selecting a cloud provider, you acknowledge that you are entering into a direct interaction with that third-party service. The processing, storage, and retention of your data are governed entirely by the privacy policy and terms of service of the provider you choose. We strongly encourage you to review the privacy policy of any provider before transmitting sensitive content.
 
 ### API key safety
 
