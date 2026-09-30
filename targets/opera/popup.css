@@ -1,0 +1,21 @@
+/* Fixed-size window for the action-popup build (Chrome/Opera/Yandex).
+   Chrome caps action popups at roughly 800x600, so keep to ~480x560 -
+   tall enough for the language/engine toolbar plus a useful reading pane,
+   without overflowing the cap on smaller screens. */
+html,
+body {
+  width: 480px;
+  min-width: 480px;
+  height: 560px;
+  min-height: 560px;
+  overflow: hidden;
+}
+
+.sidebar-page {
+  width: 100%;
+  height: 100%;
+}
+
+.toolbar {
+  align-items: flex-start;
+}

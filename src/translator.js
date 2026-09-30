@@ -6,12 +6,13 @@
 // no-signup default - confirmed with curl: anonymous requests get 400
 // "Visit https://portal.libretranslate.com to get an API key").
 //
-// Optional: bring-your-own-key LLM providers (OpenAI/Anthropic/Mistral) or
-// a local Ollama server, configured from the sidebar toolbar's engine
-// settings panel. These give better quality and no daily word cap. If no
-// key is configured, or an LLM request fails for any reason, translation
-// transparently falls back to MyMemory so the extension always works out
-// of the box.
+// Optional: bring-your-own-key LLM providers (OpenAI/Anthropic/Mistral/Groq/
+// DeepSeek/Kimi/Gemini), a free hosted Lingva instance, or a local Ollama /
+// LibreTranslate server, configured from the sidebar toolbar's engine
+// settings panel. The user picks the engine explicitly; there is no
+// automatic provider failover - if the chosen engine fails, its error is
+// shown directly instead of silently switching to a different service the
+// user did not select.
 import { LANGUAGE_NAMES } from "./languages.js";
 
 const MYMEMORY_URL = "https://api.mymemory.translated.net/get";
@@ -83,11 +84,24 @@ function truncateLinesForLocalCap(lines, maxChars) {
 //   Llama 3.3 70B at very high tokens/sec, so bulk per-line translation
 //   comes back fast; the 70B tier keeps strong multilingual quality while
 //   the "versatile" alias stays pointed at Groq's current production build.
+// - deepseek: deepseek-v4-flash - DeepSeek's cheap/fast tier; the legacy
+//   deepseek-chat/deepseek-reasoner IDs were retired 2026-07, and Flash is
+//   the sensible default for bulk translation (v4-pro is the stronger paid
+//   upgrade the user can type into the model field).
+// - kimi: kimi-k2.6 - Moonshot's OpenAI-compatible flagship-lite tier at
+//   ~$0.95/1M input tokens (k3 is ~3x pricier), so k2.6 is the better fit
+//   for page-length translation batches.
+// - gemini: gemini-3.8-flash - Google's current Flash tier via AI Studio's
+//   OpenAI-compatible endpoint; free-tier API keys are generous enough for
+//   translation use, and Flash keeps per-batch latency low.
 const DEFAULT_MODELS = {
   openai: "gpt-5.6-terra",
   anthropic: "claude-sonnet-5",
   mistral: "mistral-small-latest",
   groq: "llama-3.3-70b-versatile",
+  deepseek: "deepseek-v4-flash",
+  kimi: "kimi-k2.6",
+  gemini: "gemini-3.8-flash",
   ollama: "mistral",
 };
 
@@ -303,6 +317,43 @@ async function translateWithLibreTranslate(text, sourceLang, targetLang, options
   );
 }
 
+// Lingva - free community-hosted Google Translate proxy instances
+// (https://github.com/thedaviddelta/lingva-translate), no API key and no
+// daily quota; a no-cost engine the user can switch to when MyMemory's
+// daily cap is hit. Default instance is lingva.ml; the instance URL is
+// configurable in engine settings because community instances come and go.
+const LINGVA_CONCURRENCY = 4;
+const DEFAULT_LINGVA_URL = "https://lingva.ml";
+
+async function translateLingvaLine(line, sourceLang, targetLang, { baseUrl } = {}) {
+  const base = (baseUrl || DEFAULT_LINGVA_URL).replace(/\/$/, "");
+  const url = `${base}/api/v1/${sourceLang}/${targetLang}/${encodeURIComponent(line)}`;
+
+  let response;
+  try {
+    response = await fetch(url);
+  } catch (error) {
+    throw new Error(`Could not reach Lingva at ${base}: ${error.message}`);
+  }
+  if (!response.ok) {
+    const errBody = await response.text().catch(() => "");
+    throw new Error(`Lingva error ${response.status}: ${errBody.slice(0, 200)}`);
+  }
+
+  const result = await response.json();
+  return result.translation ?? line;
+}
+
+async function translateWithLingva(text, sourceLang, targetLang, options) {
+  const lines = text.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
+  if (lines.length === 0) return "";
+  return translateLinesWithPool(
+    lines,
+    (line) => translateLingvaLine(line, sourceLang, targetLang, options),
+    LINGVA_CONCURRENCY
+  );
+}
+
 /**
  * Builds a single prompt asking an LLM to translate a whole batch of lines
  * at once (one request per page instead of one per line/chunk), numbered so
@@ -454,6 +505,81 @@ async function translateWithGroq(lines, sourceLangName, targetLangName, { apiKey
   return parseNumberedLines(result.choices?.[0]?.message?.content || "", lines.length);
 }
 
+// DeepSeek exposes an OpenAI-compatible Chat Completions API, so this
+// mirrors translateWithOpenAI almost exactly - only the endpoint and
+// default model differ.
+async function translateWithDeepSeek(lines, sourceLangName, targetLangName, { apiKey, model }) {
+  if (!apiKey) throw new Error("Missing DeepSeek API key");
+  const result = await fetchJson(
+    "https://api.deepseek.com/v1/chat/completions",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: model || DEFAULT_MODELS.deepseek,
+        messages: [
+          { role: "system", content: "You are a precise translation engine." },
+          { role: "user", content: buildLlmPrompt(lines, sourceLangName, targetLangName) },
+        ],
+        temperature: 0,
+      }),
+    },
+    "DeepSeek"
+  );
+  lastUsage = { provider: "deepseek", tokens: result.usage?.total_tokens };
+  return parseNumberedLines(result.choices?.[0]?.message?.content || "", lines.length);
+}
+
+// Kimi (Moonshot AI) also exposes an OpenAI-compatible Chat Completions
+// API, so same pattern again - only the endpoint and default model differ.
+async function translateWithKimi(lines, sourceLangName, targetLangName, { apiKey, model }) {
+  if (!apiKey) throw new Error("Missing Kimi API key");
+  const result = await fetchJson(
+    "https://api.moonshot.ai/v1/chat/completions",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: model || DEFAULT_MODELS.kimi,
+        messages: [
+          { role: "system", content: "You are a precise translation engine." },
+          { role: "user", content: buildLlmPrompt(lines, sourceLangName, targetLangName) },
+        ],
+        temperature: 0,
+      }),
+    },
+    "Kimi"
+  );
+  lastUsage = { provider: "kimi", tokens: result.usage?.total_tokens };
+  return parseNumberedLines(result.choices?.[0]?.message?.content || "", lines.length);
+}
+
+// Gemini exposes an OpenAI-compatible Chat Completions surface under
+// generativelanguage.googleapis.com (keys from Google AI Studio, which
+// offers a free tier), so this mirrors translateWithOpenAI - only the
+// endpoint and default model differ.
+async function translateWithGemini(lines, sourceLangName, targetLangName, { apiKey, model }) {
+  if (!apiKey) throw new Error("Missing Gemini API key");
+  const result = await fetchJson(
+    "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: model || DEFAULT_MODELS.gemini,
+        messages: [
+          { role: "system", content: "You are a precise translation engine." },
+          { role: "user", content: buildLlmPrompt(lines, sourceLangName, targetLangName) },
+        ],
+        temperature: 0,
+      }),
+    },
+    "Gemini"
+  );
+  lastUsage = { provider: "gemini", tokens: result.usage?.total_tokens };
+  return parseNumberedLines(result.choices?.[0]?.message?.content || "", lines.length);
+}
+
 async function translateWithOllama(lines, sourceLangName, targetLangName, { model, baseUrl }) {
   const url = `${(baseUrl || "http://localhost:11434").replace(/\/$/, "")}/api/chat`;
   const result = await fetchJson(
@@ -478,6 +604,9 @@ const LLM_PROVIDERS = {
   anthropic: translateWithAnthropic,
   mistral: translateWithMistral,
   groq: translateWithGroq,
+  deepseek: translateWithDeepSeek,
+  kimi: translateWithKimi,
+  gemini: translateWithGemini,
   ollama: translateWithOllama,
 };
 
@@ -486,14 +615,16 @@ const LLM_PROVIDERS = {
  * @param {string} sourceLang - source language code.
  * @param {string} targetLang - target language code.
  * @param {{provider?: string, apiKey?: string, model?: string, baseUrl?: string, capChars?: number}} [options]
- *   provider defaults to "mymemory" (free, no key). "openai"/"anthropic"/
- *   "mistral"/"ollama" use the corresponding LLM adapter; "libretranslate"
- *   talks to a self-hosted LibreTranslate server (baseUrl, default
+ *   provider defaults to "mymemory" (free, no key). "lingva" uses a free
+ *   hosted Google Translate proxy instance (baseUrl, default lingva.ml).
+ *   "openai"/"anthropic"/"mistral"/"groq"/"deepseek"/"kimi"/"gemini"/
+ *   "ollama" use the corresponding LLM adapter; "libretranslate" talks to
+ *   a self-hosted LibreTranslate server (baseUrl, default
  *   http://localhost:5001 - see ~/playground/texttools for a local Docker
- *   setup). All non-MyMemory providers fall back to MyMemory automatically
- *   if the request fails (missing/invalid key, unreachable server, rate
- *   limit, etc.) so translation never hard-fails just because an optional
- *   provider is misconfigured or not running. For "ollama"/"libretranslate"
+ *   setup). Engine selection is entirely the user's: if the chosen engine
+ *   fails (missing/invalid key, unreachable server, rate limit, quota),
+ *   the error is surfaced directly rather than silently switching to a
+ *   different provider. For "ollama"/"libretranslate"
  *   (see LOCAL_CAPPED_PROVIDERS), `capChars` sets the per-provider local
  *   size cap configured in the engine settings panel, falling back to
  *   DEFAULT_LOCAL_CAP_CHARS if unset/invalid.
@@ -523,21 +654,15 @@ export async function translateText(text, sourceLang = "en", targetLang = "es", 
   }
 
   if (provider === "libretranslate") {
-    try {
-      const translated = await translateWithLibreTranslate(effectiveText, sourceLang, targetLang, options);
-      lastUsage = { provider: "libretranslate", tokens: undefined, truncated: wasTruncated };
-      return translated;
-    } catch (error) {
-      console.error("LibreTranslate translation failed, falling back to MyMemory:", error);
-      lastUsage = null;
-      try {
-        return await translateWithMyMemory(text, sourceLang, targetLang);
-      } catch (fallbackError) {
-        throw new Error(
-          `LibreTranslate failed (${error.message}); MyMemory fallback also failed (${fallbackError.message})`
-        );
-      }
-    }
+    const translated = await translateWithLibreTranslate(effectiveText, sourceLang, targetLang, options);
+    lastUsage = { provider: "libretranslate", tokens: undefined, truncated: wasTruncated };
+    return translated;
+  }
+
+  if (provider === "lingva") {
+    const translated = await translateWithLingva(effectiveText, sourceLang, targetLang, options);
+    lastUsage = { provider: "lingva", tokens: undefined, truncated: wasTruncated };
+    return translated;
   }
 
   if (providerFn) {
@@ -575,19 +700,11 @@ export async function translateText(text, sourceLang = "en", targetLang = "es", 
       };
       return translatedLines.join("\n");
     } catch (error) {
-      console.error(`${provider} translation failed, falling back to MyMemory:`, error);
+      // No automatic provider failover: the engine the user selected is
+      // what runs, so surface its error directly instead of silently
+      // switching to a service the user did not pick.
       lastUsage = null;
-
-      // If MyMemory *also* fails (e.g. its quota is exhausted), don't let
-      // that mask the original provider's error - surface both so the user
-      // can actually diagnose which one to fix.
-      try {
-        return await translateWithMyMemory(text, sourceLang, targetLang);
-      } catch (fallbackError) {
-        throw new Error(
-          `${provider} failed (${error.message}); MyMemory fallback also failed (${fallbackError.message})`
-        );
-      }
+      throw new Error(`${provider} failed: ${error.message}`);
     }
   }
 

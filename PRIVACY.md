@@ -4,7 +4,24 @@
 
 ## Summary
 
-Browser Translations is a browser extension that shows the main text of the current web page next to a line-by-line translation. The extension itself does not collect, store, or share any personal information on its own servers. However, because the core feature is translation, the text you choose to translate is sent to a third-party translation service you select.
+Browser Translations is a browser extension that shows the main text of the current web page next to a line-by-line translation. The extension itself does not collect, store, or share any personal information on its own servers. However, because the core feature is translation, the text you choose to translate is sent to the third-party translation engine you select.
+
+**If you do not want any page text to leave your computer**, you can run a local engine instead: install and start **Ollama** with a local model, or run a **LibreTranslate** server, then choose either engine from the dropdown menu. When a local engine is selected, no text is sent to any external service.
+
+## Privacy-first design
+
+To make it obvious where your text is going, the extension shows two explicit privacy notices:
+
+1. **Before translating:** the header of the sidebar/popup displays a notice that the text will be sent to the selected third-party engine, and reminds you that you can translate locally by setting up Ollama or LibreTranslate.
+2. **After translating:** a short footer line at the end of the result confirms which engine handled the text (for example, `[Translated with MyMemory online, free]` or `[Translated with Ollama local model mistral]`), so you can verify at a glance whether your text left your device.
+
+## Sensitive sites guardrail
+
+To reduce the chance of leaking private documents or email, the extension checks the active tab's domain before translating. If the tab is on a known document/email service (for example Gmail, Google Docs, Microsoft Office Online, Outlook, Notion, Evernote, Dropbox Paper, Zoho Docs or iCloud Pages), the extension **blocks all translation** — no engine, online or local, is allowed on those pages.
+
+When this happens, it shows a message explaining that Browser Translations does not translate pages on document or email services because they may contain sensitive information.
+
+This is a safety net, not a guarantee: you remain responsible for the pages you translate.
 
 ## Information the extension accesses
 
@@ -33,6 +50,12 @@ The extension can use several translation backends. Depending on which engine yo
 - **Authentication:** None required; requests are anonymous and rate-limited by IP
 - **Terms/privacy:** https://mymemory.translated.net/doc/spec.php
 
+### Optional: Lingva (free, no key)
+
+- **Provider:** a community-hosted [Lingva](https://github.com/thedaviddelta/lingva-translate) instance (a Google Translate proxy); default `https://lingva.ml`, configurable in engine settings.
+- **Data sent:** Individual lines of text to be translated.
+- **Authentication:** None.
+
 ### Optional cloud LLM providers (bring-your-own API key)
 
 These providers are only used if you explicitly select them and enter your own API key in the engine settings panel. The extension itself does **not** collect payments and has no paid subscription — you are responsible for any charges from the provider according to their own pricing.
@@ -40,9 +63,12 @@ These providers are only used if you explicitly select them and enter your own A
 | Engine | Endpoint | What is sent |
 |--------|----------|--------------|
 | OpenAI | `https://api.openai.com/v1/chat/completions` | Lines to translate plus a system prompt asking for a direct translation |
+| Gemini | `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions` | Same as above |
 | Anthropic | `https://api.anthropic.com/v1/messages` | Same as above |
 | Mistral | `https://api.mistral.ai/v1/chat/completions` | Same as above |
 | Groq | `https://api.groq.com/openai/v1/chat/completions` | Same as above |
+| DeepSeek | `https://api.deepseek.com/v1/chat/completions` | Same as above |
+| Kimi (Moonshot AI) | `https://api.moonshot.ai/v1/chat/completions` | Same as above |
 
 Your API key is stored only in your browser's local extension storage and is sent only to the selected provider's API endpoint in the `Authorization` or `x-api-key` header.
 

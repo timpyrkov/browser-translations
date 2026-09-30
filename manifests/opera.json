@@ -16,8 +16,7 @@
     "tabs",
     "activeTab",
     "storage",
-    "scripting",
-    "sidePanel"
+    "scripting"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -30,7 +29,12 @@
     "default_title": "Browser Translations",
     "default_popup": "popup.html"
   },
-  "side_panel": {
-    "default_path": "sidebar.html"
+  "sidebar_action": {
+    "default_title": "Browser Translations",
+    "default_panel": "sidebar.html",
+    "default_icon": {
+        "16": "icons/icon-16.png",
+        "32": "icons/icon-32.png"
+    }
   }
 }

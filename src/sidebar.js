@@ -25,6 +25,7 @@ const baseUrlInput = document.getElementById("baseUrlInput");
 const capCharsGroup = document.getElementById("capCharsGroup");
 const capCharsInput = document.getElementById("capCharsInput");
 const usageHint = document.getElementById("usageHint");
+const privacyNoteEl = document.getElementById("privacyNote");
 const uiLangSelectEl = document.getElementById("uiLangSelect");
 const themeToggleEl = document.getElementById("themeToggle");
 const apiKeyLabelText = document.getElementById("apiKeyLabelText");
@@ -43,7 +44,10 @@ const MAX_HISTORY = 10;
 let translationHistory = []; // avoid shadowing the global window.history
 let historyIndex = -1;
 
-const ENGINES = ["mymemory", "openai", "anthropic", "mistral", "groq", "ollama", "libretranslate"];
+// Free engines first, then the BYOK cloud providers in the same order as
+// the PRIVACY.md disclosure table (OpenAI, Gemini, Anthropic, Mistral,
+// Groq, DeepSeek, Kimi), then local/self-hosted engines last.
+const ENGINES = ["mymemory", "lingva", "openai", "gemini", "anthropic", "mistral", "groq", "deepseek", "kimi", "ollama", "libretranslate"];
 
 // "auto": translate the user's selection if any, otherwise the
 // auto-detected main content. "full": translate everything visible on the
@@ -58,9 +62,12 @@ const SCOPE_LABEL_KEYS = { auto: "scopeAutoLabel", full: "scopeFullLabel" };
 // showing it as a placeholder/hint.
 const MODEL_DEFAULTS = {
   openai: "gpt-5.6-terra",
+  gemini: "gemini-3.8-flash",
   anthropic: "claude-sonnet-5",
   mistral: "mistral-small-latest",
   groq: "llama-3.3-70b-versatile",
+  deepseek: "deepseek-v4-flash",
+  kimi: "kimi-k2.6",
   ollama: "mistral",
 };
 
@@ -93,13 +100,55 @@ function populateLanguageSelects(uiLang) {
 
 const ENGINE_LABEL_KEYS = {
   mymemory: "engineMyMemory",
+  lingva: "engineLingva",
   openai: "engineOpenAI",
+  gemini: "engineGemini",
   anthropic: "engineAnthropic",
   mistral: "engineMistral",
   groq: "engineGroq",
+  deepseek: "engineDeepSeek",
+  kimi: "engineKimi",
   ollama: "engineOllama",
   libretranslate: "engineLibreTranslate",
 };
+
+// Clean, non-localized provider names used in the small technical
+// "Translated with ..." footer so the user can see exactly which service
+// handled their text (and whether it was online/local).
+const PROVIDER_NAMES = {
+  mymemory: "MyMemory",
+  lingva: "Lingva",
+  openai: "OpenAI",
+  gemini: "Gemini",
+  anthropic: "Anthropic",
+  mistral: "Mistral",
+  groq: "Groq",
+  deepseek: "DeepSeek",
+  kimi: "Kimi",
+  ollama: "Ollama",
+  libretranslate: "LibreTranslate",
+};
+
+function normalizeOllamaModel(model) {
+  // Ollama treats a tag-less model name (e.g. "mistral") as the latest
+  // tag, and "ollama list" displays it as "mistral:latest".
+  const name = model || MODEL_DEFAULTS.ollama;
+  return name.includes(":") ? name : `${name}:latest`;
+}
+
+function buildTranslationNote(provider, model, lang) {
+  const name = PROVIDER_NAMES[provider] || provider;
+  if (provider === "mymemory" || provider === "lingva") {
+    return `[${t(lang, "translationNoteFree", name)}]`;
+  }
+  if (provider === "ollama") {
+    return `[${t(lang, "translationNoteLocalModel", name, normalizeOllamaModel(model))}]`;
+  }
+  if (provider === "libretranslate") {
+    return `[${t(lang, "translationNoteLocal", name)}]`;
+  }
+  return `[${t(lang, "translationNoteOnline", name)}]`;
+}
 
 function populateEngineSelect(uiLang) {
   const strings = UI_STRINGS[uiLang] || UI_STRINGS.en;
@@ -156,6 +205,7 @@ function applyUiLanguage(lang) {
   historyPrevBtn.title = strings.historyPrevLabel;
   historyNextBtn.title = strings.historyNextLabel;
   if (themeToggleEl) themeToggleEl.title = strings.themeToggleLabel;
+  if (privacyNoteEl) setSafeHtml(privacyNoteEl, strings.privacyNote);
   apiKeyLabelText.textContent = strings.apiKeyLabel;
   modelLabelText.textContent = strings.modelLabel;
   capCharsLabelText.textContent = strings.capCharsLabel;
@@ -201,7 +251,51 @@ const LOCAL_SERVER_ENGINES = ["ollama", "libretranslate"];
 const BASE_URL_DEFAULTS = {
   ollama: "http://localhost:11434",
   libretranslate: "http://localhost:5001",
+  lingva: "https://lingva.ml",
 };
+
+// Hosts where public online translation is considered risky because the
+// page is likely a private document/email editor. If a non-local engine is
+// selected, translation is blocked with a clear message and the user is
+// directed to set up a local engine instead.
+const SENSITIVE_HOST_EXACT = new Set([
+  "mail.google.com",
+  "gmail.com",
+  "docs.google.com",
+  "drive.google.com",
+  "sheets.google.com",
+  "slides.google.com",
+  "forms.google.com",
+  "keep.google.com",
+  "docs.new",
+  "sheets.new",
+  "slides.new",
+  "word.office.com",
+  "excel.office.com",
+  "powerpoint.office.com",
+  "www.office.com",
+  "office.com",
+  "outlook.office.com",
+  "outlook.live.com",
+  "onedrive.live.com",
+  "notion.so",
+  "www.notion.so",
+  "evernote.com",
+  "www.evernote.com",
+  "paper.dropbox.com",
+  "docs.zoho.com",
+  "pages.icloud.com",
+  "www.icloud.com",
+  "icloud.com",
+]);
+
+const SENSITIVE_HOST_SUFFIX = [".officeapps.live.com"];
+
+function isSensitiveDocumentHost(hostname) {
+  if (!hostname) return false;
+  if (SENSITIVE_HOST_EXACT.has(hostname)) return true;
+  return SENSITIVE_HOST_SUFFIX.some((suffix) => hostname.endsWith(suffix));
+}
 
 // Per-engine settings (apiKey/model/baseUrl), keyed by provider - each
 // engine remembers its own values independently, so switching engines in
@@ -249,15 +343,36 @@ async function loadEngineSettings() {
 function updateEngineFieldVisibility() {
   const provider = engineSelectEl.value;
   const isLocalServer = LOCAL_SERVER_ENGINES.includes(provider);
-  apiKeyGroup.style.display = provider === "mymemory" || isLocalServer ? "none" : "";
-  modelGroup.style.display = provider === "mymemory" || provider === "libretranslate" ? "none" : "";
-  baseUrlGroup.style.display = isLocalServer ? "" : "none";
+  // Lingva is a hosted free service but its instance URL is configurable
+  // (community instances come and go), so it shows the URL field like the
+  // local servers - just without the local-only cap field.
+  const hasBaseUrl = isLocalServer || provider === "lingva";
+  const isNoKeyEngine = provider === "mymemory" || provider === "lingva" || isLocalServer;
+  apiKeyGroup.style.display = isNoKeyEngine ? "none" : "";
+  modelGroup.style.display =
+    provider === "mymemory" || provider === "libretranslate" || provider === "lingva" ? "none" : "";
+  baseUrlGroup.style.display = hasBaseUrl ? "" : "none";
   capCharsGroup.style.display = isLocalServer ? "" : "none";
 
-  if (isLocalServer) {
+  // The gear button opens the engine settings panel. If the selected
+  // engine has nothing configurable (e.g. MyMemory), hide it so the panel
+  // never opens empty/confusing.
+  const hasVisibleFields = !isNoKeyEngine || isLocalServer || provider === "lingva";
+  engineSettingsBtn.style.display = hasVisibleFields ? "" : "none";
+  if (!hasVisibleFields) engineSettingsPanel.hidden = true;
+
+  // The privacy notice only matters when text actually leaves the device.
+  // Hide it for the fully-local engines.
+  if (privacyNoteEl) privacyNoteEl.style.display = isLocalServer ? "none" : "";
+
+  if (hasBaseUrl) {
     const strings = UI_STRINGS[uiLangSelectEl.value] || UI_STRINGS.en;
     ollamaUrlLabelText.textContent =
-      provider === "libretranslate" ? strings.libretranslateUrlLabel : strings.ollamaUrlLabel;
+      provider === "libretranslate"
+        ? strings.libretranslateUrlLabel
+        : provider === "lingva"
+          ? strings.lingvaUrlLabel
+          : strings.ollamaUrlLabel;
     baseUrlInput.placeholder = BASE_URL_DEFAULTS[provider];
   }
 }
@@ -271,13 +386,29 @@ function updateUsageHint() {
   usageHint.textContent = `Last translation used ~${usage.tokens} tokens (${usage.provider}).`;
 }
 
+// Some localized strings carry a bit of inline markup (e.g. <strong> inside
+// welcomeText). Parse it via DOMParser instead of innerHTML so AMO's linter
+// stays quiet while the markup still renders.
+function appendSafeHtml(parent, html) {
+  const parsed = new DOMParser().parseFromString(html, "text/html");
+  const nodes = parsed.body.childNodes;
+  while (nodes.length) {
+    parent.appendChild(nodes[0]);
+  }
+}
+
+function setSafeHtml(el, html) {
+  el.textContent = "";
+  appendSafeHtml(el, html);
+}
+
 function showWelcome() {
   currentScreen = "welcome";
   const strings = UI_STRINGS[uiLangSelectEl.value] || UI_STRINGS.en;
   readingPaneEl.textContent = "";
   const p = document.createElement("p");
   p.className = "welcome-text";
-  p.textContent = strings.welcomeText;
+  appendSafeHtml(p, strings.welcomeText);
   readingPaneEl.appendChild(p);
 }
 
@@ -287,7 +418,7 @@ function showLoading() {
   readingPaneEl.textContent = "";
   const p = document.createElement("p");
   p.className = "loading-text";
-  p.textContent = strings.loadingText;
+  appendSafeHtml(p, strings.loadingText);
   readingPaneEl.appendChild(p);
 }
 
@@ -296,7 +427,7 @@ function showError(message) {
   readingPaneEl.textContent = "";
   const p = document.createElement("p");
   p.className = "error-text";
-  p.textContent = message;
+  appendSafeHtml(p, message);
   readingPaneEl.appendChild(p);
 }
 
@@ -349,13 +480,13 @@ function updateHistoryButtons() {
  * the abandoned "forward" entries are dropped first - same behavior as a
  * browser's own back/forward history.
  */
-function pushHistoryAndRender(blocks, translatedBlocks) {
+function pushHistoryAndRender(blocks, translatedBlocks, meta = null) {
   translationHistory = translationHistory.slice(0, historyIndex + 1);
-  translationHistory.push({ blocks, translatedBlocks });
+  translationHistory.push({ blocks, translatedBlocks, meta });
   if (translationHistory.length > MAX_HISTORY) translationHistory.shift();
   historyIndex = translationHistory.length - 1;
   updateHistoryButtons();
-  renderParallelBlocks(blocks, translatedBlocks);
+  renderParallelBlocks(blocks, translatedBlocks, meta);
 }
 
 function showHistoryEntry(index) {
@@ -363,7 +494,7 @@ function showHistoryEntry(index) {
   if (!entry) return;
   historyIndex = index;
   updateHistoryButtons();
-  renderParallelBlocks(entry.blocks, entry.translatedBlocks);
+  renderParallelBlocks(entry.blocks, entry.translatedBlocks, entry.meta);
 }
 
 /**
@@ -428,6 +559,11 @@ async function translateActiveTab() {
 
     if (!tab.url || /^(about|chrome|edge|moz-extension|chrome-extension):/i.test(tab.url)) {
       showError(t(uiLangSelectEl.value, "errSpecialPage"));
+      return;
+    }
+
+    if (isSensitiveDocumentHost(new URL(tab.url).hostname)) {
+      showError(t(uiLangSelectEl.value, "errSensitiveDomain", new URL(tab.url).hostname));
       return;
     }
 
@@ -526,7 +662,11 @@ async function translateActiveTab() {
       finalTranslatedBlocks = [...translatedBlocks, notice];
     }
 
-    pushHistoryAndRender(finalBlocks, finalTranslatedBlocks);
+    const meta = {
+      provider: selectedProvider,
+      model: engineFields.model || MODEL_DEFAULTS[selectedProvider] || "",
+    };
+    pushHistoryAndRender(finalBlocks, finalTranslatedBlocks, meta);
   } catch (error) {
     console.error("Translation error in sidebar:", error);
     showError(describeError(uiLangSelectEl.value, error));
@@ -615,7 +755,7 @@ function buildLinePair(originalLine, translatedLine) {
  * plain paragraphs. `originalBlocks`/`translatedBlocks` must be the same
  * shape (see `translateActiveTab()`).
  */
-function renderParallelBlocks(originalBlocks, translatedBlocks) {
+function renderParallelBlocks(originalBlocks, translatedBlocks, meta = null) {
   currentScreen = "result";
   readingPaneEl.textContent = "";
 
@@ -676,4 +816,11 @@ function renderParallelBlocks(originalBlocks, translatedBlocks) {
 
   closeList();
   readingPaneEl.appendChild(fragment);
+
+  if (meta) {
+    const noteEl = document.createElement("p");
+    noteEl.className = "translation-note";
+    noteEl.textContent = buildTranslationNote(meta.provider, meta.model, uiLangSelectEl.value);
+    readingPaneEl.appendChild(noteEl);
+  }
 }

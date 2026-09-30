@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>Browser Translations</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="popup.css" />
   <script src="theme.js"></script>
   <style>
     /* Overrides the shared styles.css `body { display:flex; justify-content:center }`
@@ -26,7 +27,7 @@
       display: flex;
       flex-direction: column;
       width: 100%;
-      height: 100vh;
+      height: 100%;
       box-sizing: border-box;
       overflow: hidden;
     }
@@ -271,6 +272,7 @@
       <button id="translateBtn" class="btn btn-green btn-sm toolbar-group-gap" title="Translate this page">Translate</button>
       <button id="historyPrevBtn" class="btn btn-grey icon-btn toolbar-group-gap" title="Previous translation" disabled>&#8592;</button>
       <button id="historyNextBtn" class="btn btn-grey icon-btn" title="Next translation" disabled>&#8594;</button>
+      <button id="openSidebarBtn" class="btn btn-grey icon-btn toolbar-group-gap" title="Open in sidebar">&#8599;</button>
       <button id="themeToggle" class="theme-toggle toolbar-group-gap" title="Toggle theme">&#9728;&#65039;</button>
 
       <div class="engine-settings-panel" id="engineSettingsPanel" hidden>
@@ -299,5 +301,6 @@
   </div>
 
   <script type="module" src="sidebar.js"></script>
+  <script type="module" src="popup.js"></script>
 </body>
 </html>

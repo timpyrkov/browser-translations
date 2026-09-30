@@ -281,6 +281,91 @@ function extractWikipediaArticle() {
   return { root: clone, title };
 }
 
+/**
+ * Dedicated extraction path for Google Docs editors. Readability and the
+ * generic heuristics pick up the Google Docs chrome (side panels, menus,
+ * comments) instead of the actual document text. Google Docs has moved most
+ * of the document content to a canvas-based renderer, so the visible text is
+ * no longer reliably present in the live DOM. We therefore try two paths:
+ *   1. Live DOM paragraphs (.kix-paragraphtext) if they exist.
+ *   2. The DOCS_modelChunk embedded in the page's <script> tags, which still
+ *      contains the raw document text.
+ */
+function extractGoogleDocsArticle() {
+  if (!location.hostname.endsWith("docs.google.com")) return null;
+
+  const titleEl =
+    document.querySelector("#docs-title-widget .docs-title-input-label-inner") ||
+    document.querySelector("input.docs-title-input");
+  const title = titleEl ? (titleEl.value || titleEl.textContent || "").trim() : "";
+  const titleBlock = title ? [{ tag: "h1", lines: splitIntoLines(title) }] : [];
+
+  const blocks = extractGoogleDocsFromLiveDom();
+  if (blocks && blocks.length > 0) {
+    return { root: null, title, blocks: titleBlock.concat(blocks) };
+  }
+
+  const modelBlocks = extractGoogleDocsFromModelChunk();
+  if (modelBlocks && modelBlocks.length > 0) {
+    return { root: null, title, blocks: titleBlock.concat(modelBlocks) };
+  }
+
+  return null;
+}
+
+function extractGoogleDocsFromLiveDom() {
+  const editor = document.querySelector("#docs-editor");
+  if (!editor) return null;
+  const paragraphs = editor.querySelectorAll(".kix-paragraphtext");
+  if (paragraphs.length === 0) return null;
+
+  const blocks = [];
+  paragraphs.forEach((p) => {
+    const text = (p.innerText || p.textContent || "").trim().replace(/\s+/g, " ");
+    if (!text) return;
+    const lines = splitIntoLines(text);
+    if (lines.length > 0) blocks.push({ tag: "p", lines });
+  });
+  return blocks.length > 0 ? blocks : null;
+}
+
+/**
+ * Google Docs embeds the document model in a <script> tag as the global
+ * DOCS_modelChunk. The text content lives in "s" string fields inside that
+ * JSON-like structure. This is a fallback when the live DOM does not expose
+ * the document text (canvas rendering).
+ */
+function extractGoogleDocsFromModelChunk() {
+  const scripts = document.querySelectorAll("script");
+  let rawText = "";
+  scripts.forEach((script) => {
+    const text = script.textContent || "";
+    if (!text.includes("DOCS_modelChunk = ")) return;
+    const matches = text.match(/"s":"(.*?)"/g);
+    if (!matches) return;
+    for (const match of matches) {
+      const extracted = match
+        .replace(/^"s":"|"$/g, "")
+        .replace(/\\n/g, "\n")
+        .replace(/\\"/g, '"')
+        .replace(/\\\\/g, "\\")
+        .replace(/\\u000b/g, "\n\n");
+      rawText += extracted + "\n\n";
+    }
+  });
+
+  if (!rawText.trim()) return null;
+
+  const blocks = [];
+  rawText.split(/\n{2,}/).forEach((para) => {
+    const text = para.replace(/\s+/g, " ").trim();
+    if (!text) return;
+    const lines = splitIntoLines(text);
+    if (lines.length > 0) blocks.push({ tag: "p", lines });
+  });
+  return blocks.length > 0 ? blocks : null;
+}
+
 // Below this length, a selection is treated as accidental (e.g. a leftover
 // double-click on a single word from earlier browsing/inspecting) rather
 // than a deliberate "translate this" gesture, and is ignored in favor of
@@ -380,6 +465,11 @@ function extractBlocks(scope) {
   const selectionFragment = getSelectionFragment();
   if (selectionFragment) {
     return extractBlocksFromRoot(selectionFragment);
+  }
+
+  const googleDocsArticle = extractGoogleDocsArticle();
+  if (googleDocsArticle && googleDocsArticle.blocks.length > 0) {
+    return googleDocsArticle.blocks;
   }
 
   const wikiArticle = extractWikipediaArticle();
