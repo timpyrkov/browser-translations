@@ -70,7 +70,15 @@ These providers are only used if you explicitly select them and enter your own A
 | DeepSeek | `https://api.deepseek.com/v1/chat/completions` | Same as above |
 | Kimi (Moonshot AI) | `https://api.moonshot.ai/v1/chat/completions` | Same as above |
 
-Your API key is stored only in your browser's local extension storage and is sent only to the selected provider's API endpoint in the `Authorization` or `x-api-key` header.
+Your API key is stored only in your browser's local extension storage and is sent only to the selected provider's API endpoint in the `Authorization` or `x-api-key` header. It is never sent to the extension author or any other server. In addition, the extension validates each request against a hardcoded list of allowed endpoints so an API key cannot be accidentally sent to an unexpected URL.
+
+### API key safety
+
+Other browser extensions cannot directly access another extension's storage. However, malware running outside the browser, a malicious extension with broad permissions, or anyone with access to your unlocked browser profile could potentially read locally stored credentials. We recommend:
+
+- Use a dedicated API key just for this extension.
+- Set a low usage/spending limit on the provider side.
+- Revoke the key immediately if you notice suspicious activity or stop using the extension.
 
 ### Optional local/self-hosted providers
 

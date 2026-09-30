@@ -106,7 +106,9 @@ Both Ollama and LibreTranslate also show a **"Local translation cap (characters)
   ```
   If Ollama auto-starts via a LaunchAgent (macOS, e.g. `~/Library/LaunchAgents/com.ollama.serve.plist` for a Homebrew install), add an `EnvironmentVariables` dict with that key to the plist, then `launchctl unload`/`launchctl load` it (or `brew services restart ollama` if managed by Homebrew services) so it persists across restarts.
 
-The **Model** field is optional for OpenAI/Anthropic/Mistral/Groq/DeepSeek/Kimi/Gemini — leave it blank to use the default shown next to the field. The API key is stored only in this browser's local extension storage and is sent only to the selected provider's own API. Engine selection is entirely manual — there is no automatic failover, so if your chosen provider fails for any reason (bad/missing key, network issue, rate limit) its real error is shown directly and you can switch engines yourself. After a successful LLM translation, the panel also shows a rough token-usage note for that request.
+The **Model** field is optional for OpenAI/Gemini/Anthropic/Mistral/Groq/DeepSeek/Kimi — leave it blank to use the default shown next to the field. The API key is stored only in this browser's local extension storage and is sent only to the selected provider's own API endpoint; the extension validates each request against a hardcoded list of allowed endpoints so the key cannot be sent to an unexpected URL. Engine selection is entirely manual — there is no automatic failover, so if your chosen provider fails for any reason (bad/missing key, network issue, rate limit) its real error is shown directly and you can switch engines yourself. After a successful LLM translation, the panel also shows a rough token-usage note for that request.
+
+**API key safety:** use a dedicated key for this extension, set a low usage/spending limit on the provider side, and revoke the key if you notice anything suspicious. The extension itself does not collect payments or subscriptions; any charges come directly from the provider whose key you enter.
 
 ## Local translation with Ollama or LibreTranslate
 

@@ -105,6 +105,36 @@ const DEFAULT_MODELS = {
   ollama: "mistral",
 };
 
+// Known API endpoints for each provider. Used as a safety check so an API key
+// is never sent to an unexpected URL even if the code is modified or a
+// malicious message is passed in.
+const EXPECTED_ENDPOINTS = {
+  mymemory: "https://api.mymemory.translated.net/get",
+  openai: "https://api.openai.com/v1/chat/completions",
+  anthropic: "https://api.anthropic.com/v1/messages",
+  mistral: "https://api.mistral.ai/v1/chat/completions",
+  groq: "https://api.groq.com/openai/v1/chat/completions",
+  deepseek: "https://api.deepseek.com/v1/chat/completions",
+  kimi: "https://api.moonshot.ai/v1/chat/completions",
+  gemini: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+};
+
+function assertApiEndpoint(provider, url) {
+  const expected = EXPECTED_ENDPOINTS[provider];
+  if (expected) {
+    if (!url.startsWith(expected)) {
+      throw new Error(`Unexpected ${provider} API endpoint: ${url}`);
+    }
+    return;
+  }
+  // Configurable endpoints (Ollama, LibreTranslate, Lingva) must still be a
+  // normal http(s) URL so we don't accidentally post data to a file:// or
+  // data:// destination.
+  if (!/^https?:\/\//i.test(url)) {
+    throw new Error(`Invalid URL for ${provider}: ${url}`);
+  }
+}
+
 // Tracks token usage from the most recent LLM request, so the sidebar can
 // show a small "~N tokens used" note. null when the last translation used
 // MyMemory (no token concept) or hasn't run yet.
@@ -264,6 +294,7 @@ async function translateLinesWithPool(lines, translateOneLine, concurrency) {
 }
 
 async function translateWithMyMemory(text, sourceLang, targetLang) {
+  assertApiEndpoint("mymemory", MYMEMORY_URL);
   const lines = text.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
   if (lines.length === 0) return "";
   return translateLinesWithPool(
@@ -279,7 +310,9 @@ const LIBRETRANSLATE_CONCURRENCY = 6;
 const DEFAULT_LIBRETRANSLATE_URL = "http://localhost:5001";
 
 async function translateLibreTranslateLine(line, sourceLang, targetLang, { baseUrl, apiKey } = {}) {
-  const url = `${(baseUrl || DEFAULT_LIBRETRANSLATE_URL).replace(/\/$/, "")}/translate`;
+  const base = (baseUrl || DEFAULT_LIBRETRANSLATE_URL).replace(/\/$/, "");
+  assertApiEndpoint("libretranslate", base);
+  const url = `${base}/translate`;
   const body = {
     q: line,
     source: sourceLang === "auto" ? "auto" : sourceLang,
@@ -327,6 +360,7 @@ const DEFAULT_LINGVA_URL = "https://lingva.ml";
 
 async function translateLingvaLine(line, sourceLang, targetLang, { baseUrl } = {}) {
   const base = (baseUrl || DEFAULT_LINGVA_URL).replace(/\/$/, "");
+  assertApiEndpoint("lingva", base);
   const url = `${base}/api/v1/${sourceLang}/${targetLang}/${encodeURIComponent(line)}`;
 
   let response;
@@ -413,6 +447,7 @@ async function fetchJson(url, requestOptions, providerLabel) {
 
 async function translateWithOpenAI(lines, sourceLangName, targetLangName, { apiKey, model }) {
   if (!apiKey) throw new Error("Missing OpenAI API key");
+  assertApiEndpoint("openai", "https://api.openai.com/v1/chat/completions");
   const result = await fetchJson(
     "https://api.openai.com/v1/chat/completions",
     {
@@ -435,6 +470,7 @@ async function translateWithOpenAI(lines, sourceLangName, targetLangName, { apiK
 
 async function translateWithAnthropic(lines, sourceLangName, targetLangName, { apiKey, model }) {
   if (!apiKey) throw new Error("Missing Anthropic API key");
+  assertApiEndpoint("anthropic", "https://api.anthropic.com/v1/messages");
   const result = await fetchJson(
     "https://api.anthropic.com/v1/messages",
     {
@@ -463,6 +499,7 @@ async function translateWithAnthropic(lines, sourceLangName, targetLangName, { a
 
 async function translateWithMistral(lines, sourceLangName, targetLangName, { apiKey, model }) {
   if (!apiKey) throw new Error("Missing Mistral API key");
+  assertApiEndpoint("mistral", "https://api.mistral.ai/v1/chat/completions");
   const result = await fetchJson(
     "https://api.mistral.ai/v1/chat/completions",
     {
@@ -485,6 +522,7 @@ async function translateWithMistral(lines, sourceLangName, targetLangName, { api
 // differ.
 async function translateWithGroq(lines, sourceLangName, targetLangName, { apiKey, model }) {
   if (!apiKey) throw new Error("Missing Groq API key");
+  assertApiEndpoint("groq", "https://api.groq.com/openai/v1/chat/completions");
   const result = await fetchJson(
     "https://api.groq.com/openai/v1/chat/completions",
     {
@@ -510,6 +548,7 @@ async function translateWithGroq(lines, sourceLangName, targetLangName, { apiKey
 // default model differ.
 async function translateWithDeepSeek(lines, sourceLangName, targetLangName, { apiKey, model }) {
   if (!apiKey) throw new Error("Missing DeepSeek API key");
+  assertApiEndpoint("deepseek", "https://api.deepseek.com/v1/chat/completions");
   const result = await fetchJson(
     "https://api.deepseek.com/v1/chat/completions",
     {
@@ -534,6 +573,7 @@ async function translateWithDeepSeek(lines, sourceLangName, targetLangName, { ap
 // API, so same pattern again - only the endpoint and default model differ.
 async function translateWithKimi(lines, sourceLangName, targetLangName, { apiKey, model }) {
   if (!apiKey) throw new Error("Missing Kimi API key");
+  assertApiEndpoint("kimi", "https://api.moonshot.ai/v1/chat/completions");
   const result = await fetchJson(
     "https://api.moonshot.ai/v1/chat/completions",
     {
@@ -560,6 +600,7 @@ async function translateWithKimi(lines, sourceLangName, targetLangName, { apiKey
 // endpoint and default model differ.
 async function translateWithGemini(lines, sourceLangName, targetLangName, { apiKey, model }) {
   if (!apiKey) throw new Error("Missing Gemini API key");
+  assertApiEndpoint("gemini", "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions");
   const result = await fetchJson(
     "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
     {
@@ -581,7 +622,9 @@ async function translateWithGemini(lines, sourceLangName, targetLangName, { apiK
 }
 
 async function translateWithOllama(lines, sourceLangName, targetLangName, { model, baseUrl }) {
-  const url = `${(baseUrl || "http://localhost:11434").replace(/\/$/, "")}/api/chat`;
+  const base = (baseUrl || "http://localhost:11434").replace(/\/$/, "");
+  assertApiEndpoint("ollama", base);
+  const url = `${base}/api/chat`;
   const result = await fetchJson(
     url,
     {
