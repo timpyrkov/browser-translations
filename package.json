@@ -1,6 +1,6 @@
 {
   "name": "browser-translations",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Parallel reading web pages to learn Spanish, Russian, Korean, and more.",
   "private": true,
   "scripts": {
