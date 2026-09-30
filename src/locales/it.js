@@ -31,6 +31,7 @@ export default {
   translationNoteLocal: "Tradotto in locale con {0}",
   translationNoteLocalModel: "Tradotto in locale con {0}, modello - {1}",
   apiKeyLabel: "Chiave API",
+  apiKeySecurityNote: "<strong>IMPORTANTE:</strong> utilizza una chiave API dedicata per questa estensione, imposta un limite di utilizzo/spesa basso sul sito del fornitore e revoca la chiave immediatamente se noti qualcosa di sospetto.",
   modelLabel: "Modello",
   ollamaUrlLabel: "URL del server Ollama",
   libretranslateUrlLabel: "URL del server LibreTranslate",

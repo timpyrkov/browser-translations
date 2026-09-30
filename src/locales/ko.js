@@ -31,6 +31,7 @@ export default {
   translationNoteLocal: "{0} 로컬로 번역함",
   translationNoteLocalModel: "{0} 로컬 모델 - {1}로 번역함",
   apiKeyLabel: "API 키",
+  apiKeySecurityNote: "<strong>중요:</strong> 이 확장 프로그램 전용 API 키를 사용하고, 제공자 사이트에서 낮은 사용량/지출 한도를 설정하며, 의심스러운 활동이 있으면 즉시 키를 폐기하세요.",
   modelLabel: "모델",
   ollamaUrlLabel: "Ollama 서버 URL",
   libretranslateUrlLabel: "LibreTranslate 서버 URL",
