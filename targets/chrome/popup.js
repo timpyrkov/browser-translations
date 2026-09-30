@@ -7,11 +7,14 @@
 // and shows where the browser does have one (Chrome's side panel, Opera's
 // sidebar_action) so the click-target isn't dead weight.
 const brw = typeof browser !== "undefined" ? browser : chrome;
+const opr = typeof window !== "undefined" ? window.opr : null;
 
 import { t, detectBrowserLanguage } from "./i18n.js";
 
 const openSidebarBtn = document.getElementById("openSidebarBtn");
-const sidebarAction = brw.sidebarAction;
+// Opera exposes its sidebar API under opr.sidebarAction; Firefox uses
+// browser.sidebarAction; Chrome uses chrome.sidePanel.
+const sidebarAction = brw.sidebarAction || (opr && opr.sidebarAction);
 const sidePanel = brw.sidePanel;
 const canOpenSidebar =
   (sidebarAction && typeof sidebarAction.open === "function") ||
