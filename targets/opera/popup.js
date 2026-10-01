@@ -12,6 +12,10 @@ const opr = typeof window !== "undefined" ? window.opr : null;
 import { t, detectBrowserLanguage } from "./i18n.js";
 
 const openSidebarBtn = document.getElementById("openSidebarBtn");
+// In the Opera package there is no "open in sidebar" button inside the popup:
+// Opera has its own sidebar icon for the persistent sidebar. The popup is only
+// a fallback for browsers without a sidebar API (e.g. Yandex via the Chrome package).
+if (!openSidebarBtn) return;
 // Opera exposes its sidebar API under opr.sidebarAction; Firefox uses
 // browser.sidebarAction; Chrome uses chrome.sidePanel.
 const sidebarAction = brw.sidebarAction || (opr && opr.sidebarAction);
