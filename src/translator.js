@@ -356,7 +356,7 @@ async function translateWithLibreTranslate(text, sourceLang, targetLang, options
 // daily cap is hit. Default instance is lingva.ml; the instance URL is
 // configurable in engine settings because community instances come and go.
 const LINGVA_CONCURRENCY = 4;
-const DEFAULT_LINGVA_URL = "https://lingva.ml";
+const DEFAULT_LINGVA_URL = "https://lingva-ml-standby.stswoon.ru";
 
 async function translateLingvaLine(line, sourceLang, targetLang, { baseUrl } = {}) {
   const base = (baseUrl || DEFAULT_LINGVA_URL).replace(/\/$/, "");

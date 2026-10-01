@@ -94,7 +94,7 @@ By default, translation uses the free MyMemory API — no setup needed, but limi
 - **Groq** — needs an API key from [console.groq.com](https://console.groq.com/). Defaults to `llama-3.3-70b-versatile`.
 - **DeepSeek** — needs an API key from [platform.deepseek.com](https://platform.deepseek.com/). Defaults to `deepseek-v4-flash`.
 - **Kimi** — needs an API key from [platform.kimi.ai](https://platform.kimi.ai/). Defaults to `kimi-k2.6`.
-- **Lingva** — free hosted [Lingva](https://github.com/thedaviddelta/lingva-translate) instance (a privacy-friendly Google Translate proxy), no API key. Defaults to `https://lingva.ml`; the instance URL is configurable in engine settings since community instances come and go.
+- **Lingva** — free hosted [Lingva](https://github.com/thedaviddelta/lingva-translate) instance (a privacy-friendly Google Translate proxy), no API key. Defaults to `https://lingva-ml-standby.stswoon.ru`; the instance URL is configurable in engine settings since community instances come and go.
 - **Ollama** — fully local and free, no API key. Run Ollama and enter its URL (default `http://localhost:11434`) and the model name you've pulled (defaults to `mistral`).
 - **LibreTranslate** — fully local and free like Ollama, but a dedicated translation server (not an LLM) with no daily word cap. Run it via Docker: `docker run -it -p 5001:5000 -v libretranslate_models:/home/libretranslate/.local/share libretranslate/libretranslate` (first run downloads language models, can take a while). Enter the server URL in engine settings (default `http://localhost:5001`); no API key needed for a default local instance.
 
@@ -149,7 +149,7 @@ Both engines keep all text on your own machine and have no daily word cap.
 The extension itself does not collect, store, or share any personal data. When you click **Translate**, the readable text of the active page is sent to the translation engine you selected:
 
 - **MyMemory** — anonymous, free, rate-limited by IP.
-- **Lingva** — free hosted instance (default `lingva.ml`, configurable), no key.
+- **Lingva** — free hosted instance (default `lingva-ml-standby.stswoon.ru`, configurable), no key.
 - **OpenAI, Anthropic, Mistral, Groq, DeepSeek, Kimi, Gemini** — sent only when you provide your own API key; you are responsible for any charges from that provider.
 - **Ollama / LibreTranslate** — local/self-hosted by you; text does not leave your machine unless you configure a remote server.
 
