@@ -32,6 +32,7 @@ export default {
   translationNoteLocalModel: "Traducido con {0} local, modelo - {1}",
   apiKeyLabel: "Clave API",
   apiKeySecurityNote: "<strong>IMPORTANTE:</strong> use una clave API dedicada para esta extensión. Establezca un límite bajo de uso/gasto en el lado del proveedor. Revocar la clave inmediatamente si algo parece sospechoso o si deja de usar la extensión.",
+  lingvaAlternativesNote: "<strong>ALTERNATIVAS:</strong> Si esta instancia no funciona, pruebe https://lingva-ml-standby.stswoon.ru, https://translate.plausibility.cloud, https://lingva.lunar.icu, https://translate.igna.wtf, o aloje la suya propia (consulte lingva-translate en GitHub).",
   modelLabel: "Modelo",
   ollamaUrlLabel: "URL del servidor Ollama",
   libretranslateUrlLabel: "URL del servidor LibreTranslate",

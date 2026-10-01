@@ -30,6 +30,7 @@ const uiLangSelectEl = document.getElementById("uiLangSelect");
 const themeToggleEl = document.getElementById("themeToggle");
 const apiKeyLabelText = document.getElementById("apiKeyLabelText");
 const apiKeySecurityNoteEl = document.getElementById("apiKeySecurityNote");
+const lingvaAlternativesNoteEl = document.getElementById("lingvaAlternativesNote");
 const modelLabelText = document.getElementById("modelLabelText");
 const ollamaUrlLabelText = document.getElementById("ollamaUrlLabelText");
 const capCharsLabelText = document.getElementById("capCharsLabelText");
@@ -209,6 +210,7 @@ function applyUiLanguage(lang) {
   if (privacyNoteEl) setSafeHtml(privacyNoteEl, strings.privacyNote);
   apiKeyLabelText.textContent = strings.apiKeyLabel;
   if (apiKeySecurityNoteEl) setSafeHtml(apiKeySecurityNoteEl, strings.apiKeySecurityNote);
+  if (lingvaAlternativesNoteEl) setSafeHtml(lingvaAlternativesNoteEl, strings.lingvaAlternativesNote);
   modelLabelText.textContent = strings.modelLabel;
   capCharsLabelText.textContent = strings.capCharsLabel;
 

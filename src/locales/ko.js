@@ -32,6 +32,7 @@ export default {
   translationNoteLocalModel: "{0} 로컬 모델 - {1}로 번역함",
   apiKeyLabel: "API 키",
   apiKeySecurityNote: "<strong>중요:</strong> 이 확장 프로그램 전용 API 키를 사용하세요. 제공자 측에서 낮은 사용량/지출 한도를 설정하세요. 의심스러운 상황이 있거나 확장 프로그램 사용을 중단하면 즉시 키를 폐기하세요.",
+  lingvaAlternativesNote: "<strong>대안:</strong> 이 인스턴스가 작동하지 않으면 https://lingva-ml-standby.stswoon.ru, https://translate.plausibility.cloud, https://lingva.lunar.icu, https://translate.igna.wtf을 시도하거나 직접 호스팅하세요(GitHub의 lingva-translate 참조).",
   modelLabel: "모델",
   ollamaUrlLabel: "Ollama 서버 URL",
   libretranslateUrlLabel: "LibreTranslate 서버 URL",

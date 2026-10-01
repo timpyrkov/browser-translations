@@ -56,7 +56,7 @@ The extension can use several translation backends. Depending on which engine yo
 
 ### Optional: Lingva (free, no key)
 
-- **Provider:** a community-hosted [Lingva](https://github.com/thedaviddelta/lingva-translate) instance (a Google Translate proxy); default `https://lingva-ml-standby.stswoon.ru`, configurable in engine settings.
+- **Provider:** a community-hosted [Lingva](https://github.com/thedaviddelta/lingva-translate) instance (a Google Translate proxy); default `https://lingva.ml`, configurable in engine settings.
 - **Data sent:** Individual lines of text to be translated.
 - **Authentication:** None.
 
