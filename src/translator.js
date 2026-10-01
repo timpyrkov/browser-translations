@@ -375,7 +375,14 @@ async function translateLingvaLine(line, sourceLang, targetLang, { baseUrl } = {
   }
 
   const result = await response.json();
-  return result.translation ?? line;
+  const translated = result.translation ?? line;
+  // If the returned text is identical to the source and the languages differ,
+  // the instance likely failed to translate this pair. Don't silently return
+  // the original text.
+  if (sourceLang !== targetLang && translated === line) {
+    throw new Error("Lingva returned the original text unchanged. The selected language pair may be unsupported by this instance, or the instance may be temporarily unavailable. Try a different engine or another Lingva instance URL in the engine settings.");
+  }
+  return translated;
 }
 
 async function translateWithLingva(text, sourceLang, targetLang, options) {
