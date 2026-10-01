@@ -32,7 +32,7 @@ export default {
   translationNoteLocalModel: "通过本地 {0} 模型 - {1} 翻译",
   apiKeyLabel: "API 密钥",
   apiKeySecurityNote: "<strong>重要：</strong>请使用专用于此扩展程序的 API 密钥。在提供商侧设置较低的使用量/支出限额。如果发现任何可疑情况或停止使用该扩展程序，请立即撤销该密钥。",
-  lingvaAlternativesNote: "<strong>替代方案：</strong>如果此实例无法工作，请尝试 https://lingva-ml-standby.stswoon.ru、https://translate.plausibility.cloud、https://lingva.lunar.icu、https://translate.igna.wtf，或自行托管（参见 GitHub 上的 lingva-translate）。",
+  lingvaAlternativesNote: "<strong>替代方案：</strong>https://lingva.ml、https://lingva.lunar.icu、https://translate.igna.wtf、https://translate.plausibility.cloud、https://lingva-ml-standby.stswoon.ru，或自行托管（参见 GitHub 上的 lingva-translate）。",
   modelLabel: "模型",
   ollamaUrlLabel: "Ollama 服务器地址",
   libretranslateUrlLabel: "LibreTranslate 服务器地址",

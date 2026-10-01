@@ -32,7 +32,7 @@ export default {
   translationNoteLocalModel: "Переведено локально через {0}, модель - {1}",
   apiKeyLabel: "API-ключ",
   apiKeySecurityNote: "<strong>ВАЖНО:</strong> Используйте отдельный API-ключ для этого расширения. Установите низкий лимит использования/расходов на стороне провайдера. Отзовите ключ немедленно, если что-то выглядит подозрительно или если вы перестанете использовать расширение.",
-  lingvaAlternativesNote: "<strong>АЛЬТЕРНАТИВЫ:</strong> Если этот экземпляр не работает, попробуйте https://lingva-ml-standby.stswoon.ru, https://translate.plausibility.cloud, https://lingva.lunar.icu, https://translate.igna.wtf или разверните свой собственный (см. lingva-translate на GitHub).",
+  lingvaAlternativesNote: "<strong>АЛЬТЕРНАТИВЫ:</strong> https://lingva.ml, https://lingva.lunar.icu, https://translate.igna.wtf, https://translate.plausibility.cloud, https://lingva-ml-standby.stswoon.ru, или разверните свой собственный (см. lingva-translate на GitHub).",
   modelLabel: "Модель",
   ollamaUrlLabel: "URL сервера Ollama",
   libretranslateUrlLabel: "URL сервера LibreTranslate",

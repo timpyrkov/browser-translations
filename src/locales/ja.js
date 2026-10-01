@@ -32,7 +32,7 @@ export default {
   translationNoteLocalModel: "{0} ローカルモデル - {1} で翻訳",
   apiKeyLabel: "APIキー",
   apiKeySecurityNote: "<strong>重要:</strong> この拡張機能専用の API キーを使用してください。プロバイダー側で低い使用量/支出上限を設定してください。不審な点があるか、この拡張機能の使用をやめる場合は、すぐにキーを取り消してください。",
-  lingvaAlternativesNote: "<strong>代替案:</strong> このインスタンスが機能しない場合は、https://lingva-ml-standby.stswoon.ru、https://translate.plausibility.cloud、https://lingva.lunar.icu、https://translate.igna.wtf を試すか、自分でホストしてください（GitHub の lingva-translate を参照）。",
+  lingvaAlternativesNote: "<strong>代替案:</strong> https://lingva.ml、https://lingva.lunar.icu、https://translate.igna.wtf、https://translate.plausibility.cloud、https://lingva-ml-standby.stswoon.ru、または自分でホストしてください（GitHub の lingva-translate を参照）。",
   modelLabel: "モデル",
   ollamaUrlLabel: "Ollama サーバーURL",
   libretranslateUrlLabel: "LibreTranslate サーバーURL",
