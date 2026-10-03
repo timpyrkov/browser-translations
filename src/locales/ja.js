@@ -23,6 +23,7 @@ export default {
   translateBtn: "翻訳",
   historyPrevLabel: "前の翻訳",
   historyNextLabel: "次の翻訳",
+  clearHistoryLabel: "すべての翻訳を消去",
   themeToggleLabel: "テーマ切替",
   openSidebarLabel: "サイドバーで開く",
   privacyNote: "<strong>重要：</strong>テキストは選択したサードパーティの翻訳エンジンに送信されます。ローカルで翻訳するには、Ollama または LibreTranslate をセットアップし、ここのドロップダウンメニューから選択してください。",

@@ -23,6 +23,7 @@ export default {
   translateBtn: "Traduci",
   historyPrevLabel: "Traduzione precedente",
   historyNextLabel: "Traduzione successiva",
+  clearHistoryLabel: "Cancella tutte le traduzioni",
   themeToggleLabel: "Cambia tema",
   openSidebarLabel: "Apri nella barra laterale",
   privacyNote: "<strong>IMPORTANTE:</strong> il testo verrà inviato al motore di traduzione di terze parti selezionato. Per tradurre in locale, configura Ollama o LibreTranslate e sceglilo dal menu a tendina qui.",

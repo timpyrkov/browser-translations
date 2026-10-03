@@ -1,6 +1,6 @@
 # Privacy Policy for Browser Translations
 
-**Last updated:** 2026-09-26
+**Last updated:** 2026-10-03
 
 ## Summary
 
@@ -41,7 +41,29 @@ The following are stored locally in your browser's extension storage and never t
 - UI language and theme choice
 - Selected translation engine
 - Per-engine settings (API key, model name, base URL, local cap)
-- Simple in-memory translation history inside the sidebar (not persisted across sidebar closes)
+
+### Translation history
+
+So that your translations are not lost when you close and reopen the sidebar or popup, the extension keeps your **last 10 translations** (the extracted page text and its translation, plus the name of the engine used). When an 11th translation is made, the oldest one is dropped.
+
+This history is kept in the browser's **session storage** (`storage.session`):
+
+- it is held in memory only and is **never written to disk**;
+- it is never sent anywhere — not to the extension author, and not to any translation engine;
+- it cannot be read by web pages or content scripts;
+- it is erased automatically when you close the browser, and when the extension is reloaded, updated, disabled, or uninstalled.
+
+The **Clear all** button (trash icon next to the ← / → history arrows) erases the entire translation history immediately, in every open sidebar/popup. A translation that is still in progress when you press it is discarded. Your settings are not affected.
+
+### What is kept and what is erased
+
+| | Settings (`storage.local`) | Translation history (`storage.session`) |
+|---|---|---|
+| Sidebar/popup closed and reopened | kept | kept |
+| **Clear all** pressed | kept | erased |
+| Browser closed / restarted | kept | erased |
+| Extension reloaded, updated, or disabled | kept | erased |
+| Extension uninstalled | erased | erased |
 
 ## Third-party translation services
 
@@ -102,7 +124,7 @@ These run on hardware or servers you control. No text leaves your machine unless
 ## Permissions explained
 
 - **`<all_urls>` / `activeTab` / `tabs`:** Required to read the active page's content when you press Translate and to open the sidebar/side panel.
-- **`storage`:** Saves your language, engine, theme, and API-key preferences locally.
+- **`storage`:** Saves your language, engine, theme, and API-key preferences locally (`storage.local`), and keeps the last 10 translations in memory-only session storage (`storage.session`) until you press **Clear all** or close the browser.
 - **`scripting`:** Injects a small content script to extract the page's main text.
 
 ## Changes to this policy

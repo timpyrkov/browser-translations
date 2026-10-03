@@ -28,20 +28,20 @@ if (!canOpenSidebar) {
     openSidebarBtn.title = t(lang, "openSidebarLabel");
   });
 
-  openSidebarBtn.addEventListener("click", async () => {
-    try {
-      if (sidebarAction && typeof sidebarAction.open === "function") {
-        // Opera-style sidebar
-        await sidebarAction.open();
-      } else {
-        // Chrome-style side panel - needs the hosting browser window's id,
-        // not the popup's own, so ask for the last focused normal window.
-        const win = await brw.windows.getLastFocused({ windowTypes: ["normal"] });
-        await sidePanel.open({ windowId: win.id });
-      }
-    } catch (error) {
-      console.error("Failed to open sidebar/side panel:", error);
-    }
-    window.close();
+  // sidePanel.open() must run inside the click's user gesture, so look up the
+  // hosting browser window now and call open() synchronously on click.
+  let hostWindowId = null;
+  if (brw.windows && typeof brw.windows.getCurrent === "function") {
+    brw.windows.getCurrent().then((win) => { hostWindowId = win.id; }).catch(() => {});
+  }
+
+  openSidebarBtn.addEventListener("click", () => {
+    const opening =
+      sidebarAction && typeof sidebarAction.open === "function"
+        ? sidebarAction.open()
+        : sidePanel.open({ windowId: hostWindowId });
+    Promise.resolve(opening)
+      .catch((error) => console.error("Failed to open sidebar/side panel:", error))
+      .finally(() => window.close());
   });
 }

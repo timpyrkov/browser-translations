@@ -23,6 +23,7 @@ export default {
   translateBtn: "Übersetzen",
   historyPrevLabel: "Vorherige Übersetzung",
   historyNextLabel: "Nächste Übersetzung",
+  clearHistoryLabel: "Alle Übersetzungen löschen",
   themeToggleLabel: "Design wechseln",
   openSidebarLabel: "In der Seitenleiste öffnen",
   privacyNote: "<strong>WICHTIG:</strong> Der Text wird an die ausgewählte externe Übersetzungs-Engine gesendet. Für eine lokale Übersetzung richten Sie Ollama oder LibreTranslate ein und wählen Sie sie im Dropdown-Menü hier aus.",

@@ -23,6 +23,7 @@ export default {
   translateBtn: "翻译",
   historyPrevLabel: "上一个翻译",
   historyNextLabel: "下一个翻译",
+  clearHistoryLabel: "清除所有翻译",
   themeToggleLabel: "切换主题",
   openSidebarLabel: "在侧边栏中打开",
   privacyNote: "<strong>重要提示：</strong>文本将发送到所选第三方翻译引擎。如需本地翻译，请设置 Ollama 或 LibreTranslate，并在此下拉菜单中选择它。",

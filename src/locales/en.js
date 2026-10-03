@@ -23,6 +23,7 @@ export default {
   translateBtn: "Translate",
   historyPrevLabel: "Previous translation",
   historyNextLabel: "Next translation",
+  clearHistoryLabel: "Clear all translations",
   themeToggleLabel: "Toggle theme",
   openSidebarLabel: "Open in sidebar",
   privacyNote: "<strong>IMPORTANT:</strong> The text will be sent to the selected third-party translation engine. To translate locally, setup Ollama or LibreTranslate and choose it from the dropdown menu here.",

@@ -19,24 +19,40 @@ brw.runtime.onInstalled.addListener(async (details) => {
   }
 });
 
-// There's no popup (see manifests) — clicking the toolbar icon should just
-// open the sidebar/side panel directly.
+// Toolbar icon behaviour per browser:
+// - Firefox: no popup; the icon opens the sidebar.
+// - Chrome: the manifest declares a popup as the safe default, but a declared
+//   popup always wins the icon click. Where a side panel works, tell Chrome to
+//   open it on click and only then remove the popup, so the side panel is the
+//   primary UI. If anything fails the popup stays.
+// - Opera (no sidePanel permission) and Yandex (no extension side panel): the
+//   popup stays; Opera's persistent sidebar opens from Opera's sidebar icon.
 if (typeof browser !== "undefined" && browser.sidebarAction) {
-  // Firefox: with no default_popup, clicking the action icon fires
-  // action.onClicked instead of doing nothing, so open the sidebar here.
   browser.action.onClicked.addListener(() => {
     browser.sidebarAction.open();
   });
 } else {
-  // Chrome: this is the documented way to make the action icon open the
-  // side panel directly, without needing an onClicked listener.
   // Access the API indirectly so the Firefox AMO linter does not flag a
   // Chrome-only property in the shared background script.
   const chromeRuntime = typeof chrome !== "undefined" ? chrome : null;
   const sidePanel = chromeRuntime && chromeRuntime.sidePanel ? chromeRuntime.sidePanel : null;
-  if (sidePanel && typeof sidePanel.setPanelBehavior === "function") {
-    sidePanel
-      .setPanelBehavior({ openPanelOnActionClick: true })
-      .catch((error) => console.error("Failed to set side panel behavior:", error));
+  // Yandex may expose the side-panel API without showing a panel; removing
+  // the popup there would leave the icon doing nothing.
+  const isYandex = typeof navigator !== "undefined" && /YaBrowser/i.test(navigator.userAgent || "");
+  const canUseSidePanel =
+    !isYandex &&
+    sidePanel &&
+    typeof sidePanel.setPanelBehavior === "function" &&
+    typeof sidePanel.open === "function";
+
+  if (canUseSidePanel) {
+    const preferSidePanel = () =>
+      sidePanel
+        .setPanelBehavior({ openPanelOnActionClick: true })
+        .then(() => chromeRuntime.action.setPopup({ popup: "" }))
+        .catch((error) => console.error("Side panel unavailable; keeping the toolbar popup:", error));
+    preferSidePanel();
+    // setPopup does not outlast the browser session; re-apply on every start.
+    chromeRuntime.runtime.onStartup.addListener(preferSidePanel);
   }
 }

@@ -23,6 +23,7 @@ export default {
   translateBtn: "번역",
   historyPrevLabel: "이전 번역",
   historyNextLabel: "다음 번역",
+  clearHistoryLabel: "모든 번역 지우기",
   themeToggleLabel: "테마 전환",
   openSidebarLabel: "사이드바에서 열기",
   privacyNote: "<strong>중요:</strong> 텍스트는 선택한 제3자 번역 엔진으로 전송됩니다. 로컬에서 번역하려면 Ollama 또는 LibreTranslate를 설치하고 이 드롭다운 메뉴에서 선택하세요.",

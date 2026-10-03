@@ -39,9 +39,14 @@ Then click **Load unpacked** and select the `dist/chrome/` folder
 - Supports 9 languages: English, Spanish, Italian, French, German, Russian, Korean, Japanese, Chinese — automatic source-language detection, or pick languages manually from the sidebar toolbar
 - Interface (UI chrome) language selector, fully translated into all 9 languages (separate from the page-translation languages) — defaults to your browser's language if supported, else English
 - Dark/light theme toggle (defaults to dark)
+- Translation history: the last 10 translations (← / → arrows) survive closing and reopening the sidebar or popup. They are kept in memory-only `storage.session` (never written to disk, erased on browser restart); the **Clear all** trash button erases them immediately
 - Works on articles, Wikipedia pages, and most content-heavy sites
 - Firefox (primary) and Chrome/Opera support via a shared `src/` codebase and per-browser manifests + `targets/` overlays
-- Dual mode on Chrome-family builds: clicking the toolbar icon opens a fixed-size **popup** (works on Yandex Browser, which installs from the Chrome/Opera stores but has no sidebar surface), while Chrome's side panel and Opera's sidebar remain available — the popup has an "open in sidebar" ↗ button that appears only where a sidebar API exists
+- Toolbar icon per browser:
+  - **Firefox:** opens the sidebar
+  - **Chrome:** opens the side panel; the manifest's popup is removed at runtime once the side panel accepts the click, and kept as a fallback otherwise
+  - **Opera:** opens a fixed-size popup; the persistent sidebar opens from Opera's own sidebar icon (pin it to keep it open across tabs)
+  - **Yandex Browser** (installs from the Chrome/Opera stores, no extension sidebar): opens the popup
 
 ## Installation
 

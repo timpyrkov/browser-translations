@@ -13,6 +13,7 @@ const scopeSelectEl = document.getElementById("scopeSelect");
 const translateBtn = document.getElementById("translateBtn");
 const historyPrevBtn = document.getElementById("historyPrevBtn");
 const historyNextBtn = document.getElementById("historyNextBtn");
+const clearHistoryBtn = document.getElementById("clearHistoryBtn");
 const engineSelectEl = document.getElementById("engineSelect");
 const engineSettingsBtn = document.getElementById("engineSettingsBtn");
 const engineSettingsPanel = document.getElementById("engineSettingsPanel");
@@ -45,6 +46,20 @@ let currentScreen = "welcome";
 const MAX_HISTORY = 10;
 let translationHistory = []; // avoid shadowing the global window.history
 let historyIndex = -1;
+
+// The history is mirrored to storage.session so it survives closing and
+// reopening the sidebar/popup. storage.session is held in memory only (never
+// written to disk), is not readable from content scripts, and is cleared on
+// browser restart and on extension reload/update. Where it is unavailable,
+// the history silently stays panel-memory-only as before.
+const HISTORY_KEY = "translationHistory";
+const sessionStore = brw.storage && brw.storage.session ? brw.storage.session : null;
+// Identifies this panel's own writes, so its storage.onChanged echo is ignored
+// while changes from another open panel (sidebar + popup, other window) apply.
+const PANEL_ID = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+// Bumped by "Clear all" - a translation still in flight when the history was
+// cleared is discarded instead of bringing a page back after the clear.
+let historyGeneration = 0;
 
 // Free engines first, then the BYOK cloud providers in the same order as
 // the PRIVACY.md disclosure table (OpenAI, Gemini, Anthropic, Mistral,
@@ -206,6 +221,7 @@ function applyUiLanguage(lang) {
   translateBtn.title = strings.translateBtn;
   historyPrevBtn.title = strings.historyPrevLabel;
   historyNextBtn.title = strings.historyNextLabel;
+  clearHistoryBtn.title = strings.clearHistoryLabel;
   if (themeToggleEl) themeToggleEl.title = strings.themeToggleLabel;
   if (privacyNoteEl) setSafeHtml(privacyNoteEl, strings.privacyNote);
   apiKeyLabelText.textContent = strings.apiKeyLabel;
@@ -476,20 +492,61 @@ function describeError(lang, error) {
 function updateHistoryButtons() {
   historyPrevBtn.disabled = historyIndex <= 0;
   historyNextBtn.disabled = historyIndex < 0 || historyIndex >= translationHistory.length - 1;
+  clearHistoryBtn.disabled = translationHistory.length === 0;
+}
+
+function saveHistory() {
+  if (!sessionStore) return;
+  sessionStore
+    .set({ [HISTORY_KEY]: { entries: translationHistory, index: historyIndex, writer: PANEL_ID } })
+    .catch((error) => console.warn("Could not save translation history:", error));
+}
+
+/** Loads a stored { entries, index } snapshot into memory (does not render). */
+function applyStoredHistory(stored) {
+  translationHistory = stored && Array.isArray(stored.entries) ? stored.entries.slice(-MAX_HISTORY) : [];
+  const last = translationHistory.length - 1;
+  historyIndex = last < 0 ? -1 : Math.min(Math.max(Number.isInteger(stored.index) ? stored.index : last, 0), last);
+  updateHistoryButtons();
+}
+
+function renderCurrentHistory() {
+  if (historyIndex >= 0) showHistoryEntry(historyIndex);
+  else showWelcome();
+}
+
+async function restoreHistory() {
+  if (!sessionStore) return;
+  try {
+    applyStoredHistory((await sessionStore.get(HISTORY_KEY))[HISTORY_KEY]);
+    renderCurrentHistory();
+  } catch (error) {
+    console.warn("Could not restore translation history:", error);
+  }
+}
+
+function clearHistory() {
+  historyGeneration++;
+  translationHistory = [];
+  historyIndex = -1;
+  updateHistoryButtons();
+  showWelcome();
+  if (sessionStore) {
+    sessionStore.remove(HISTORY_KEY).catch((error) => console.warn("Could not clear translation history:", error));
+  }
 }
 
 /**
  * Records a freshly completed translation as the newest history entry and
- * renders it. If the user had navigated back and then translated again,
- * the abandoned "forward" entries are dropped first - same behavior as a
- * browser's own back/forward history.
+ * renders it. Plain FIFO: the new entry is always appended (even after
+ * navigating back), and only the oldest entry is dropped beyond MAX_HISTORY.
  */
 function pushHistoryAndRender(blocks, translatedBlocks, meta = null) {
-  translationHistory = translationHistory.slice(0, historyIndex + 1);
   translationHistory.push({ blocks, translatedBlocks, meta });
   if (translationHistory.length > MAX_HISTORY) translationHistory.shift();
   historyIndex = translationHistory.length - 1;
   updateHistoryButtons();
+  saveHistory();
   renderParallelBlocks(blocks, translatedBlocks, meta);
 }
 
@@ -499,6 +556,12 @@ function showHistoryEntry(index) {
   historyIndex = index;
   updateHistoryButtons();
   renderParallelBlocks(entry.blocks, entry.translatedBlocks, entry.meta);
+}
+
+function navigateHistory(index) {
+  if (index < 0 || index >= translationHistory.length) return;
+  showHistoryEntry(index);
+  saveHistory();
 }
 
 /**
@@ -552,22 +615,28 @@ function truncateBlocksForLocalCap(blocks, maxChars) {
  * sidebar has finished loading and attached its listener.
  */
 async function translateActiveTab() {
+  const generation = historyGeneration;
+  // After "Clear all" the panel shows the welcome screen; don't replace it
+  // with an error from the translation that was cleared.
+  const fail = (message) => {
+    if (generation === historyGeneration) showError(message);
+  };
   try {
     showLoading();
 
     const [tab] = await brw.tabs.query({ active: true, currentWindow: true });
     if (!tab || !tab.id) {
-      showError(t(uiLangSelectEl.value, "errNoActiveTab"));
+      fail(t(uiLangSelectEl.value, "errNoActiveTab"));
       return;
     }
 
     if (!tab.url || /^(about|chrome|edge|moz-extension|chrome-extension):/i.test(tab.url)) {
-      showError(t(uiLangSelectEl.value, "errSpecialPage"));
+      fail(t(uiLangSelectEl.value, "errSpecialPage"));
       return;
     }
 
     if (isSensitiveDocumentHost(new URL(tab.url).hostname)) {
-      showError(t(uiLangSelectEl.value, "errSensitiveDomain", new URL(tab.url).hostname));
+      fail(t(uiLangSelectEl.value, "errSensitiveDomain", new URL(tab.url).hostname));
       return;
     }
 
@@ -584,7 +653,7 @@ async function translateActiveTab() {
     const scope = scopeSelectEl.value === "full" ? "full" : "auto";
     const response = await brw.tabs.sendMessage(tab.id, { command: "extract-text", scope });
     if (!response || response.status !== "success" || !response.payload || response.payload.length === 0) {
-      showError(t(uiLangSelectEl.value, "errNoText"));
+      fail(t(uiLangSelectEl.value, "errNoText"));
       return;
     }
 
@@ -619,7 +688,7 @@ async function translateActiveTab() {
     const originalLines = blocks.flatMap((b) => b.lines);
 
     if (originalLines.length === 0) {
-      showError(t(uiLangSelectEl.value, "errNoText"));
+      fail(t(uiLangSelectEl.value, "errNoText"));
       return;
     }
 
@@ -629,6 +698,7 @@ async function translateActiveTab() {
     const sourceLang = fromChoice === "auto" ? detectLanguage(sample) : fromChoice;
 
     if (sourceLang === destLang) {
+      if (generation !== historyGeneration) return;
       pushHistoryAndRender(blocks, blocks);
       return;
     }
@@ -640,6 +710,7 @@ async function translateActiveTab() {
       provider: selectedProvider,
       ...engineFields,
     });
+    if (generation !== historyGeneration) return; // "Clear all" pressed meanwhile
     const translatedLines = translatedText.split("\n");
 
     // Backends preserve line count/order, but guard against a short-count
@@ -673,7 +744,7 @@ async function translateActiveTab() {
     pushHistoryAndRender(finalBlocks, finalTranslatedBlocks, meta);
   } catch (error) {
     console.error("Translation error in sidebar:", error);
-    showError(describeError(uiLangSelectEl.value, error));
+    fail(describeError(uiLangSelectEl.value, error));
   }
 }
 
@@ -688,17 +759,30 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadLanguageSelection();
   await loadEngineSettings();
   await loadUiLanguage();
+  await restoreHistory();
 });
+
+// Keep several open panels (sidebar + popup, other windows) in sync. Memory is
+// always updated so a later push here can't resurrect cleared entries; the
+// view is left alone while this panel is busy translating.
+if (sessionStore && brw.storage.onChanged) {
+  brw.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== "session" || !changes[HISTORY_KEY]) return;
+    const stored = changes[HISTORY_KEY].newValue;
+    if (stored && stored.writer === PANEL_ID) return;
+    if (!stored) historyGeneration++; // cleared from another panel
+    applyStoredHistory(stored);
+    if (currentScreen !== "loading" || !stored) renderCurrentHistory();
+  });
+}
 
 translateBtn.addEventListener("click", translateActiveTab);
 
-historyPrevBtn.addEventListener("click", () => {
-  if (historyIndex > 0) showHistoryEntry(historyIndex - 1);
-});
+historyPrevBtn.addEventListener("click", () => navigateHistory(historyIndex - 1));
 
-historyNextBtn.addEventListener("click", () => {
-  if (historyIndex < translationHistory.length - 1) showHistoryEntry(historyIndex + 1);
-});
+historyNextBtn.addEventListener("click", () => navigateHistory(historyIndex + 1));
+
+clearHistoryBtn.addEventListener("click", clearHistory);
 
 engineSettingsBtn.addEventListener("click", () => {
   engineSettingsPanel.hidden = !engineSettingsPanel.hidden;
