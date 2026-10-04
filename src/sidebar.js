@@ -60,6 +60,9 @@ const PANEL_ID = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 // Bumped by "Clear all" - a translation still in flight when the history was
 // cleared is discarded instead of bringing a page back after the clear.
 let historyGeneration = 0;
+// Bumped whenever the user navigates the history, so a late error from a
+// translation started earlier does not replace the entry they went back to.
+let viewGeneration = 0;
 
 // Free engines first, then the BYOK cloud providers in the same order as
 // the PRIVACY.md disclosure table (OpenAI, Gemini, Anthropic, Mistral,
@@ -430,6 +433,7 @@ function showWelcome() {
   p.className = "welcome-text";
   appendSafeHtml(p, strings.welcomeText);
   readingPaneEl.appendChild(p);
+  updateHistoryButtons();
 }
 
 function showLoading() {
@@ -440,6 +444,7 @@ function showLoading() {
   p.className = "loading-text";
   appendSafeHtml(p, strings.loadingText);
   readingPaneEl.appendChild(p);
+  updateHistoryButtons();
 }
 
 function showError(message) {
@@ -449,6 +454,7 @@ function showError(message) {
   p.className = "error-text";
   appendSafeHtml(p, message);
   readingPaneEl.appendChild(p);
+  updateHistoryButtons();
 }
 
 /**
@@ -489,10 +495,19 @@ function describeError(lang, error) {
   return t(lang, "errGeneric", msg);
 }
 
+// While an error/loading/welcome screen covers the reading pane, the entry at
+// historyIndex is not visible, so "<-" brings that entry back instead of
+// skipping past it, and "->" moves on to the next one. Messages never lock
+// the history buttons.
+function isShowingHistoryEntry() {
+  return currentScreen === "result";
+}
+
 function updateHistoryButtons() {
-  historyPrevBtn.disabled = historyIndex <= 0;
-  historyNextBtn.disabled = historyIndex < 0 || historyIndex >= translationHistory.length - 1;
-  clearHistoryBtn.disabled = translationHistory.length === 0;
+  const last = translationHistory.length - 1;
+  historyPrevBtn.disabled = isShowingHistoryEntry() ? historyIndex <= 0 : historyIndex < 0;
+  historyNextBtn.disabled = historyIndex < 0 || historyIndex >= last;
+  clearHistoryBtn.disabled = last < 0;
 }
 
 function saveHistory() {
@@ -560,6 +575,7 @@ function showHistoryEntry(index) {
 
 function navigateHistory(index) {
   if (index < 0 || index >= translationHistory.length) return;
+  viewGeneration++;
   showHistoryEntry(index);
   saveHistory();
 }
@@ -616,10 +632,11 @@ function truncateBlocksForLocalCap(blocks, maxChars) {
  */
 async function translateActiveTab() {
   const generation = historyGeneration;
-  // After "Clear all" the panel shows the welcome screen; don't replace it
-  // with an error from the translation that was cleared.
+  const view = viewGeneration;
+  // After "Clear all" (welcome screen) or after the user went back to an
+  // earlier translation, don't cover the screen with this attempt's error.
   const fail = (message) => {
-    if (generation === historyGeneration) showError(message);
+    if (generation === historyGeneration && view === viewGeneration) showError(message);
   };
   try {
     showLoading();
@@ -778,7 +795,9 @@ if (sessionStore && brw.storage.onChanged) {
 
 translateBtn.addEventListener("click", translateActiveTab);
 
-historyPrevBtn.addEventListener("click", () => navigateHistory(historyIndex - 1));
+historyPrevBtn.addEventListener("click", () =>
+  navigateHistory(isShowingHistoryEntry() ? historyIndex - 1 : historyIndex)
+);
 
 historyNextBtn.addEventListener("click", () => navigateHistory(historyIndex + 1));
 
@@ -911,4 +930,5 @@ function renderParallelBlocks(originalBlocks, translatedBlocks, meta = null) {
     noteEl.textContent = buildTranslationNote(meta.provider, meta.model, uiLangSelectEl.value);
     readingPaneEl.appendChild(noteEl);
   }
+  updateHistoryButtons();
 }
