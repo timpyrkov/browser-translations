@@ -11,10 +11,23 @@
        layout sizes .sidebar-page to its *content* width, which is what
        made the whole sidebar visibly shrink/grow with how much text was
        showing (empty during loading/errors, wide once translated). */
+    /* Pin the document to exactly the window: the shared styles.css body
+       has `min-height: 100vh` plus 1rem padding, which made the page 2rem
+       taller than the panel and gave it an outer scrollbar. Only the reading
+       pane scrolls. */
+    html {
+      height: 100%;
+      overflow: hidden;
+    }
+
     body {
       display: block;
       margin: 0;
       padding: 1rem;
+      box-sizing: border-box;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
       background-color: var(--background);
       color: var(--foreground);
       font-size: 15px;
@@ -26,7 +39,7 @@
       display: flex;
       flex-direction: column;
       width: 100%;
-      height: 100vh;
+      height: 100%;
       box-sizing: border-box;
       overflow: hidden;
     }
@@ -117,6 +130,11 @@
       box-shadow: var(--shadow);
     }
 
+    .engine-settings-panel:not([hidden]) {
+      max-height: 50vh;
+      overflow-y: auto;
+    }
+
     .engine-settings-panel[hidden] {
       display: none;
     }
@@ -141,6 +159,10 @@
     .engine-usage-hint {
       margin-top: 0.5em;
       margin-bottom: 0;
+    }
+
+    .privacy-note {
+      flex-shrink: 0;
     }
 
     .reading-pane {

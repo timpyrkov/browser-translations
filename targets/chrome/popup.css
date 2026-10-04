@@ -9,6 +9,7 @@ body {
   height: 560px;
   min-height: 560px;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .sidebar-page {
@@ -18,4 +19,9 @@ body {
 
 .toolbar {
   align-items: flex-start;
+}
+
+/* 50vh is meaningless in a fixed-size popup; cap the settings panel instead. */
+.engine-settings-panel:not([hidden]) {
+  max-height: 280px;
 }
