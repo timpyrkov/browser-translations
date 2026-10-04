@@ -293,28 +293,47 @@ input[type="radio"]:hover {
   transform: scale(0.97);
 }
 
-/* Primary (gold/orange gradient) — matches the "Active" primary-accent button
-   in the reference palette screenshot: solid gradient fill, dark text. */
+/* Colour-coded action buttons, built from the palette (same gradients as
+   Browser Images). Class names describe the colour actually drawn:
+   - green: primary action (Translate)
+   - yellow: navigation (history arrows)
+   - red: destructive action (Clear all)
+   Disabled/active states come from the shared .btn rules above. */
 .btn-green {
+  background: linear-gradient(180deg, var(--secondary-light), var(--secondary-2) 55%, var(--secondary-5));
+  border-color: var(--secondary-5);
+  color: #101a05;
+}
+.btn-green:hover:not(:disabled), .btn-green:focus-visible {
+  filter: brightness(1.08);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent-2) 55%, transparent);
+  outline: none;
+}
+
+.btn-yellow {
   background: linear-gradient(180deg, var(--primary-light), var(--primary-2) 55%, var(--primary-4));
   border-color: var(--primary-4);
   color: #241a03;
 }
-.btn-green:hover:not(:disabled), .btn-green:focus-visible {
+.btn-yellow:hover:not(:disabled), .btn-yellow:focus-visible {
   filter: brightness(1.08);
   box-shadow: 0 0 12px color-mix(in srgb, var(--primary-1) 55%, transparent);
   outline: none;
 }
 
-/* Secondary (olive/green gradient) accent button. */
-.btn-yellow {
-  background: linear-gradient(135deg, var(--secondary-light), var(--secondary-2) 55%, var(--secondary-5));
-  border-color: var(--secondary-5);
-  color: #101a05;
+.btn-red {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-error) 80%, white),
+    color-mix(in srgb, var(--color-error) 85%, black) 55%,
+    color-mix(in srgb, var(--color-error) 60%, black)
+  );
+  border-color: color-mix(in srgb, var(--color-error) 60%, black);
+  color: #2a0f0a;
 }
-.btn-yellow:hover:not(:disabled), .btn-yellow:focus-visible {
+.btn-red:hover:not(:disabled), .btn-red:focus-visible {
   filter: brightness(1.08);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--accent-2) 55%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-error) 55%, transparent);
   outline: none;
 }
 

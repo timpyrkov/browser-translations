@@ -225,6 +225,7 @@ function applyUiLanguage(lang) {
   historyPrevBtn.title = strings.historyPrevLabel;
   historyNextBtn.title = strings.historyNextLabel;
   clearHistoryBtn.title = strings.clearHistoryLabel;
+  clearHistoryBtn.textContent = strings.clearHistoryBtn;
   if (themeToggleEl) themeToggleEl.title = strings.themeToggleLabel;
   if (privacyNoteEl) setSafeHtml(privacyNoteEl, strings.privacyNote);
   apiKeyLabelText.textContent = strings.apiKeyLabel;

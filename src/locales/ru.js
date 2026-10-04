@@ -24,6 +24,7 @@ export default {
   historyPrevLabel: "Предыдущий перевод",
   historyNextLabel: "Следующий перевод",
   clearHistoryLabel: "Очистить все переводы",
+  clearHistoryBtn: "Очистить",
   themeToggleLabel: "Сменить тему",
   openSidebarLabel: "Открыть в боковой панели",
   privacyNote: "<strong>ВАЖНО:</strong> Текст будет отправлен выбранному стороннему движку перевода. Для локального перевода установите Ollama или LibreTranslate и выберите его в выпадающем меню здесь.",
