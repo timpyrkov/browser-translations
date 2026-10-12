@@ -27,6 +27,7 @@ const capCharsGroup = document.getElementById("capCharsGroup");
 const capCharsInput = document.getElementById("capCharsInput");
 const usageHint = document.getElementById("usageHint");
 const privacyNoteEl = document.getElementById("privacyNote");
+const disclaimerNoteEl = document.getElementById("disclaimerNote");
 const uiLangSelectEl = document.getElementById("uiLangSelect");
 const themeToggleEl = document.getElementById("themeToggle");
 const apiKeyLabelText = document.getElementById("apiKeyLabelText");
@@ -228,6 +229,7 @@ function applyUiLanguage(lang) {
   clearHistoryBtn.textContent = strings.clearHistoryBtn;
   if (themeToggleEl) themeToggleEl.title = strings.themeToggleLabel;
   if (privacyNoteEl) setSafeHtml(privacyNoteEl, strings.privacyNote);
+  if (disclaimerNoteEl) setSafeHtml(disclaimerNoteEl, strings.disclaimerNote);
   apiKeyLabelText.textContent = strings.apiKeyLabel;
   if (apiKeySecurityNoteEl) setSafeHtml(apiKeySecurityNoteEl, strings.apiKeySecurityNote);
   if (lingvaAlternativesNoteEl) setSafeHtml(lingvaAlternativesNoteEl, strings.lingvaAlternativesNote);
@@ -421,6 +423,19 @@ function appendSafeHtml(parent, html) {
   }
 }
 
+// Messages are rendered as HTML (for the bundled strings' <strong> markup),
+// so any text that comes from outside the extension - error bodies from a
+// translation server, page hostnames - is escaped before it is substituted
+// into a message, and shows up as plain text.
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function setSafeHtml(el, html) {
   el.textContent = "";
   appendSafeHtml(el, html);
@@ -472,6 +487,9 @@ function describeError(lang, error) {
   if (/could not establish connection|receiving end does not exist/i.test(msg)) {
     return t(lang, "errContentScript");
   }
+  if (/stopped at the output limit/i.test(msg)) {
+    return t(lang, "errOutputLimit");
+  }
   if (/ollama failed.*error 403/i.test(msg) || (/ollama/i.test(msg) && /403/.test(msg))) {
     return t(lang, "errOllama403");
   }
@@ -493,7 +511,7 @@ function describeError(lang, error) {
   if (/missing host permission/i.test(msg)) {
     return t(lang, "errMissingHostPermission");
   }
-  return t(lang, "errGeneric", msg);
+  return t(lang, "errGeneric", escapeHtml(msg));
 }
 
 // While an error/loading/welcome screen covers the reading pane, the entry at
@@ -654,7 +672,7 @@ async function translateActiveTab() {
     }
 
     if (isSensitiveDocumentHost(new URL(tab.url).hostname)) {
-      fail(t(uiLangSelectEl.value, "errSensitiveDomain", new URL(tab.url).hostname));
+      fail(t(uiLangSelectEl.value, "errSensitiveDomain", escapeHtml(new URL(tab.url).hostname)));
       return;
     }
 
@@ -749,10 +767,16 @@ async function translateActiveTab() {
     // the rest of the page is missing entirely.
     let finalBlocks = blocks;
     let finalTranslatedBlocks = translatedBlocks;
-    if (wasTruncatedLocally) {
-      const notice = { tag: "notice", lines: [t(uiLangSelectEl.value, "noticeOllamaTruncated")] };
-      finalBlocks = [...blocks, notice];
-      finalTranslatedBlocks = [...translatedBlocks, notice];
+    const notices = [];
+    if (wasTruncatedLocally) notices.push(t(uiLangSelectEl.value, "noticeOllamaTruncated"));
+    // LLM reply lines that failed validation (much longer than the original,
+    // or not matching any original line) were hidden by translator.js.
+    const suspicious = getLastUsage()?.suspiciousLines || 0;
+    if (suspicious > 0) notices.push(t(uiLangSelectEl.value, "noticeSuspiciousLines", suspicious));
+    for (const line of notices) {
+      const notice = { tag: "notice", lines: [line] };
+      finalBlocks = [...finalBlocks, notice];
+      finalTranslatedBlocks = [...finalTranslatedBlocks, notice];
     }
 
     const meta = {

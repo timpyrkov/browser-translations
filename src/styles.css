@@ -538,6 +538,21 @@ input[type="number"]::-webkit-outer-spin-button {
   font-weight: 600;
 }
 
+/* Standing notice at the foot of the panel, outside the scrolling reading
+   pane (same style as the IMPORTANT note in Browser Images). */
+.panel-notice {
+  flex-shrink: 0;
+  margin: 0.6em 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.panel-notice strong {
+  color: var(--error);
+  font-weight: 700;
+}
+
 .api-key-security-note {
   margin: 0 0 0.5em 0;
   font-size: 12px;
